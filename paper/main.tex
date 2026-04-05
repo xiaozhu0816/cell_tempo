@@ -298,16 +298,20 @@ During the preparation of this work, the author(s) used Claude (Anthropic) in or
 \section*{MAIN FIGURE TITLES AND LEGENDS}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-%%% Figure 1 — Binary accuracy over time
+%%% Figure 1 — Multi-panel comparison: temporal vs single-frame
 \noindent\includegraphics[width=\linewidth]{fig1_main_comparison.pdf}
 
-\subsection*{Figure 1. Temporal encoding maintains robust binary infection detection throughout 48 hours of infection}
+\subsection*{Figure 1. Temporal encoding maintains robust infection detection throughout 48 hours of infection}
 
-Binary classification accuracy computed in 3-hour time bins for the temporal multi-task model (blue) and the single-frame multi-task model (orange) across the full 48-hour infection timeline.
-Both models achieve comparable performance during early (0--12h) and mid (12--24h) phases.
-During late-stage infection (40--48h), the single-frame model degrades sharply (dropping to 75\% binary accuracy at 46.5h), while the temporal model maintains $>$97\% accuracy.
-The maximum advantage of $+$22.5 percentage points occurs at 46.5 hours.
-Dashed vertical lines indicate phase boundaries.
+Multi-panel comparison of temporal and single-frame models across the 48-hour infection timeline.
+\newline
+(A) Four-class accuracy over time in 3-hour bins: the temporal model (blue) maintains stable performance while the single-frame model (orange) collapses at late time points. Shaded regions indicate early (0--6h) and late (24--48h) phases.
+\newline
+(B) Binary (infected vs.\ mock) accuracy over time: both derived (from 4-class) and dedicated binary models are shown. The temporal model maintains $>$97\% binary accuracy at 40--48h, while the single-frame model drops to 75\%.
+\newline
+(C) Temporal advantage (temporal $-$ single-frame accuracy) over time for both four-class and binary tasks. The advantage peaks at 40--48h.
+\newline
+(D) Regression MAE over time: the temporal model achieves lower prediction error throughout, with the largest advantage during early hours (0--6h).
 
 \newpage
 
@@ -328,13 +332,14 @@ Features were extracted from the test set at epoch~30.
 
 \subsection*{Figure 3. Dose-dependent progression of cytopathic effects in HBMVEC infected with VEEV TC-83}
 
-Representative brightfield images (CLAHE-enhanced) showing morphological progression across four experimental conditions (rows: Mock, MOI~0.1, MOI~1, MOI~5) and five time points (columns: 3h, 12h, 24h, 36h, 48h).
+%%% NOTE: Verify time points match the actual figure. Current figure shows 0h, 12h, 24h, 36h, 46h.
+%%% If figure is regenerated, update time points below accordingly.
+Representative brightfield images showing morphological progression across four experimental conditions (rows: MOI~5, MOI~1, MOI~0.1, Mock) and five time points (columns: 0h, 12h, 24h, 36h, 46h).
 Mock cells maintain a flattened, cobblestone-like endothelial morphology throughout.
 MOI~5 wells show pronounced cell rounding and detachment by 12--16 hours.
 MOI~1 wells exhibit similar changes beginning around 18--24 hours.
 MOI~0.1 wells show subtle, heterogeneous changes emerging at 24--36 hours.
-Scale bar: 100~$\mu$m.
-Images acquired with CELLCYTE X at 10$\times$ magnification (0.862~$\mu$m/pixel).
+Images acquired with CELLCYTE X at 10$\times$ magnification in Enhanced Contour mode (0.862~$\mu$m/pixel). Data shown from Run~2.
 
 \newpage
 
@@ -343,11 +348,16 @@ Images acquired with CELLCYTE X at 10$\times$ magnification (0.862~$\mu$m/pixel)
 
 \subsection*{Figure 4. Temporal pseudo-RGB encoding visualizes morphological trajectory as color variation}
 
-Pseudo-RGB images constructed by stacking three time-offset brightfield frames across four infection conditions at 30 hours post-infection.
-Channels encode: R\,=\,$t{-}6$h, G\,=\,$t{-}3$h, B\,=\,$t$ (current).
-Regions undergoing active morphological change appear as color shifts (indicating temporal dynamics), while static regions appear gray (indicating stable morphology).
-Infected wells (MOI~5, MOI~1) show prominent color patterns reflecting progressive CPE, while Mock wells appear predominantly gray, reflecting stable confluent morphology.
-This encoding enables standard RGB-pretrained CNNs to learn temporal features without architectural modification.
+Construction of temporal pseudo-RGB images at three representative time points demonstrating the encoding principle.
+Each row shows the three input channels (R\,=\,$t{-}6$h, G\,=\,$t{-}3$h, B\,=\,$t$) and the resulting pseudo-RGB composite.
+\newline
+Top row: early time point ($t = 2.0$h), where channels are clamped to $t=0$ and produce a gray composite with minimal temporal information.
+\newline
+Middle row: mid time point ($t = 20.0$h), where full 6-hour temporal context is available and the composite captures ongoing morphological changes.
+\newline
+Bottom row: late time point ($t = 40.0$h), where strong CPE progression produces pronounced color patterns in infected wells.
+\newline
+Static regions appear gray; regions undergoing active morphological change appear as color shifts. This encoding enables standard RGB-pretrained CNNs to learn temporal features without architectural modification.
 
 \newpage
 
@@ -369,8 +379,8 @@ Class labels: 0$=$MOI~5, 1$=$MOI~1, 2$=$MOI~0.1, 3$=$Mock.
 
 \subsection*{Figure 6. Multi-task regression accurately predicts time post-infection}
 
-Predicted vs.\ actual time post-infection for (A) temporal multi-task model (MAE $= 1.33$h, R$^2 = 0.982$) and (B) single-frame multi-task model (MAE $= 1.49$h, R$^2 = 0.977$).
-Points are colored by infection condition.
+Predicted vs.\ actual time post-infection for (A) temporal four-class multi-task model (MAE $= 1.34$h, R$^2 = 0.981$) and (B) single-frame four-class multi-task model (MAE $= 1.67$h, R$^2 = 0.971$).
+Points are colored by infection condition (MOI~5, MOI~1, MOI~0.1, Mock).
 The temporal model achieves tighter clustering around the diagonal, particularly during early hours (0--6h) where temporal channels provide strong time-ordering cues.
 The dashed line indicates perfect prediction ($y = x$).
 
@@ -390,14 +400,14 @@ The dashed line indicates perfect prediction ($y = x$).
 \multicolumn{8}{l}{\emph{Single-frame models}} \\
 SF binary cls-only & Binary & & & 89.2\% & --- & --- & --- \\
 SF binary multi-task & Binary & & \checkmark & 90.7\% & --- & 1.49 & 0.977 \\
-SF 4cls cls-only & 4-class & & & ---\textsuperscript{a} & 54.7\% & --- & --- \\
+SF 4cls cls-only & 4-class & & & 88.0\%\textsuperscript{a} & 54.7\% & --- & --- \\
 SF 4cls multi-task & 4-class & & \checkmark & 91.0\%\textsuperscript{a} & 63.1\% & 1.67 & 0.971 \\
 SF reg-only & Reg & & & --- & --- & 1.45 & 0.979 \\
 \midrule
 \multicolumn{8}{l}{\emph{Temporal models}} \\
 Temporal binary cls-only & Binary & \checkmark & & 94.1\% & --- & --- & --- \\
 Temporal binary multi-task & Binary & \checkmark & \checkmark & \textbf{93.2\%} & --- & \textbf{1.33} & \textbf{0.982} \\
-Temporal 4cls cls-only & 4-class & \checkmark & & ---\textsuperscript{a} & 67.3\% & --- & --- \\
+Temporal 4cls cls-only & 4-class & \checkmark & & 93.8\%\textsuperscript{a} & 67.3\% & --- & --- \\
 Temporal 4cls multi-task & 4-class & \checkmark & \checkmark & 93.5\%\textsuperscript{a} & \textbf{70.6\%} & 1.34 & 0.981 \\
 Temporal reg-only & Reg & \checkmark & & --- & --- & 1.21 & 0.985 \\
 \bottomrule
