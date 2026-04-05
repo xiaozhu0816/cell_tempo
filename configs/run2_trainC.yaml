@@ -1,0 +1,89 @@
+# Run2 Train-C: Train on Row C only, external test on Row B
+# Row A excluded (cell quality issues)
+#
+# Split strategy:
+#   Row C (c1-c4): 70% train, 30% test (held-out)
+#   Row B (b1-b4): 100% external test
+
+experiment_name: run2_trainC
+
+seed: 42
+
+data:
+  run2_dir: "/isilon/datalake/gurcan_rsch/scratch/WSI/zhengjie/DATA/GMU_cell_1023/HBMVEC/HBMVEC_10X_Run2"
+
+  plate_layout:
+    a1: moi5
+    b1: moi5
+    c1: moi5
+    a2: moi1
+    b2: moi1
+    c2: moi1
+    a3: moi01
+    b3: moi01
+    c3: moi01
+    a4: mock
+    b4: mock
+    c4: mock
+
+  class_labels:
+    moi5: 0
+    moi1: 1
+    moi01: 2
+    mock: 3
+
+  class_names: ["MOI5", "MOI1", "MOI0.1", "Mock"]
+
+  # Train on Row C, external test on Row B
+  train_row: "c"
+  external_row: "b"
+
+  train_ratio: 0.7
+  split_seed: 123
+
+  batch_size: 300
+  eval_batch_size_multiplier: 2
+  num_workers: 4
+
+  transforms:
+    image_size: 512
+    crop_border_fraction: 0.05
+    random_flip: true
+    random_rotation: true
+    color_jitter: false
+    mean: [0.5, 0.5, 0.5]
+    std: [0.25, 0.25, 0.25]
+
+  frames:
+    frames_per_hour: 2.0
+    window_hours: [0, 46]
+    stride: 1
+
+multitask:
+  infection_onset_hour: 0.0
+  clamp_range: [0.0, 46.0]
+  classification_weight: 1.0
+  regression_weight: 1.0
+
+model:
+  name: resnet50
+  pretrained: true
+  num_classes: 4
+  dropout: 0.2
+  train_backbone: true
+  hidden_dim: 256
+  use_cls_conditioning: false
+
+training:
+  epochs: 100
+  eval_interval: 5
+  amp: true
+  grad_clip: 1.0
+
+optimizer:
+  lr: 0.0001
+  weight_decay: 0.0001
+
+scheduler:
+  t_max: 100
+  eta_min: 0.000001

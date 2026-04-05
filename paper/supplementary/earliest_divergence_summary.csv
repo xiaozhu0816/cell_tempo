@@ -1,0 +1,7 @@
+MOI,Model,Earliest_AUROC_0.90,Earliest_Acc_0.85
+MOI 5,Temporal,7.5,7.5
+MOI 5,Single-frame,4.5,7.5
+MOI 1,Temporal,1.5,4.5
+MOI 1,Single-frame,1.5,7.5
+MOI 0.1,Temporal,13.5,13.5
+MOI 0.1,Single-frame,13.5,13.5

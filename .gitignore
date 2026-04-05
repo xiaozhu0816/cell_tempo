@@ -1,0 +1,42 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+
+# Model checkpoints
+*.pth
+*.pt
+
+# Data files
+*.npy
+*.npz
+*.tiff
+*.tif
+
+# Training outputs
+outputs/
+logs/
+slurm_LOG/
+
+# Paper build artifacts
+paper/*.aux
+paper/*.log
+paper/*.out
+paper/*.bbl
+paper/*.blg
+paper/*.fdb_latexmk
+paper/*.fls
+paper/*.synctex.gz
+
+# Generated figure directories
+paper_figures*/
+analysis_per_timepoint/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/

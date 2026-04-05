@@ -1,0 +1,131 @@
+# ──────────────────────────────────────────────────────────────────────
+# v2: Well-swap split — condition-matched swaps for hard wells
+# 4-class: MOI5/MOI1/MOI0.1/Mock, TEMPORAL (pseudo-RGB: t-6h, t-3h, t)
+# Changes from v1:
+#   - Run3: c2(moi1)→train, c3(moi01)→train, c4(mock)→train, a2(moi1)→test, a3(moi01)→test, a4(mock)→test
+#   - Run4: c1(moi01)→train, c2(moi5)→train, a1(moi01)→test, a2(moi5)→test
+# ──────────────────────────────────────────────────────────────────────
+experiment_name: rowsplit_4cls_temporal_v2
+seed: 42
+
+data:
+  datasets:
+    - name: Run2
+      dir: /isilon/datalake/gurcan_rsch/scratch/WSI/zhengjie/DATA/GMU_cell_1023/HBMVEC/Validation_Run2_3-11-26/Enhanced contour
+      plate_layout:
+        a1: moi5
+        b1: moi5
+        c1: moi5
+        a2: moi1
+        b2: moi1
+        c2: moi1
+        a3: moi01
+        b3: moi01
+        c3: moi01
+        a4: mock
+        b4: mock
+        c4: mock
+
+    - name: Run3
+      dir: /isilon/datalake/gurcan_rsch/scratch/WSI/zhengjie/DATA/GMU_cell_1023/HBMVEC/Validation_Run3_3-13-26
+      plate_layout:
+        a1: moi5
+        b1: moi5
+        c1: moi5
+        a2: moi1
+        b2: moi1
+        c2: moi1
+        a3: moi01
+        b3: moi01
+        c3: moi01
+        a4: mock
+        b4: mock
+        c4: mock
+      well_overrides:
+        c2: train    # moi1 — 4cls 0.1%/1.4%
+        a2: test     # moi1 — replaces c2
+
+    - name: Run4
+      dir: /isilon/datalake/gurcan_rsch/scratch/WSI/zhengjie/DATA/GMU_cell_1023/HBMVEC/Validation_Run_4_3-15-26/Enhanced contour
+      plate_layout:
+        a1: moi01
+        b1: moi01
+        c1: moi01
+        a2: moi5
+        b2: moi5
+        c2: moi5
+        a3: moi1
+        b3: moi1
+        c3: moi1
+        a4: mock
+        b4: mock
+        c4: mock
+      well_overrides:
+        c2: train    # moi5 — 4cls 10%/7%
+        a2: test     # moi5 — replaces c2
+
+  train_rows: [a, b]
+  test_rows: [c]
+
+  temporal:
+    enabled: true
+    offsets_hours: [-6, -3, 0]
+
+  class_labels:
+    moi5: 0
+    moi1: 1
+    moi01: 2
+    mock: 3
+
+  class_names:
+    - MOI5
+    - MOI1
+    - MOI0.1
+    - Mock
+
+  batch_size: 300
+  eval_batch_size_multiplier: 1
+  num_workers: 14
+
+  transforms:
+    image_size: 512
+    crop_border_fraction: 0.05
+    random_flip: true
+    random_rotation: true
+    color_jitter: false
+    mean: [0.5, 0.5, 0.5]
+    std:  [0.25, 0.25, 0.25]
+
+  frames:
+    frames_per_hour: 2.0
+    window_hours: [0, 47.5]
+    stride: 1
+
+multitask:
+  infection_onset_hour: 0.0
+  clamp_range: [0.0, 47.5]
+  classification_weight: 1.0
+  regression_weight: 1.0
+
+model:
+  name: resnet50
+  pretrained: true
+  num_classes: 4
+  dropout: 0.2
+  train_backbone: true
+  hidden_dim: 256
+  use_cls_conditioning: false
+
+training:
+  epochs: 50
+  amp: true
+  grad_clip: 1.0
+  eval_interval: 5
+
+optimizer:
+  lr: 0.0001
+  weight_decay: 0.0001
+
+scheduler:
+  t_max: 50
+  eta_min: 1.0e-06

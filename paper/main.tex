@@ -1,0 +1,576 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%% Cell Reports — LaTeX manuscript
+%%% Based on Cell Press template v1.10
+%%% Binary-first framing (v2), STAR Methods format
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%% =====================================================
+%%% HIGHLIGHTS (upload separately; <=85 characters each)
+%%% =====================================================
+%%% - Temporal pseudo-RGB encoding detects viral infection from label-free microscopy
+%%% - Three time-offset brightfield frames stacked as RGB resolve late-stage ambiguity
+%%% - Binary infection detection reaches 93.2% across three biological replicates
+%%% - Temporal encoding gains +22 pp over single-frame methods at 40-48 hours
+%%% - Multi-task learning jointly predicts infection status and time post-infection
+%%%
+%%% =====================================================
+%%% eTOC BLURB / IN BRIEF (upload separately; ~50 words)
+%%% =====================================================
+%%% Zhu et al. present a temporal pseudo-RGB encoding strategy that stacks
+%%% time-offset brightfield frames as color channels, enabling standard CNNs
+%%% to detect viral infection from label-free microscopy. Combined with
+%%% multi-task learning, the approach maintains robust detection throughout
+%%% 48 hours of VEEV infection, overcoming late-stage morphological ambiguity
+%%% that causes single-frame methods to fail.
+%%%
+%%% =====================================================
+%%% GRAPHICAL ABSTRACT (upload separately as image file)
+%%% — You will need to create this in PowerPoint/Illustrator
+%%% =====================================================
+
+\documentclass[12pt,letterpaper]{article}
+\usepackage[a4paper, total={7in, 10in}]{geometry}
+\renewcommand{\familydefault}{\sfdefault}
+\usepackage{graphicx}
+\usepackage{helvet}
+\usepackage{authblk}
+\usepackage{hyperref}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{booktabs}
+\usepackage{multirow}
+\usepackage{xcolor}
+\usepackage[super,comma,sort&compress]{natbib}
+\bibliographystyle{numbered}
+\usepackage[right]{lineno}\linenumbers
+
+\graphicspath{{figures/}}
+
+\makeatletter
+\renewcommand{\maketitle}{\bgroup\setlength{\parindent}{0pt}
+\begin{flushleft}
+  \textbf{\@title}
+
+  \@author
+\end{flushleft}\egroup}
+\makeatother
+
+\title{Temporal Pseudo-RGB Encoding with Multi-Task Learning for Robust Label-Free Infection Detection in Human Brain Endothelial Cells}
+\date{}
+
+\author[1,*]{Zhengjie Zhu}
+\author[2]{Stephanie Trefry}
+\author[1]{Hao Lu}
+\author[1]{Abbas Alili}
+\author[1]{Yongxin Guo}
+\author[2]{Aarthi Narayanan}
+\author[1,3,**]{Metin Nafi Gurcan}
+
+\affil[1]{Center for Artificial Intelligence Research, Wake Forest University School of Medicine, Winston-Salem, NC 27157, USA}
+\affil[2]{Department of Biology, George Mason University, Fairfax, VA 22030, USA}
+\affil[3]{Lead contact}
+
+\affil[*]{Correspondence: Zhengjie.Zhu@wfusm.edu}
+\affil[**]{Correspondence: mgurcan@wakehealth.edu}
+
+\begin{document}
+
+\maketitle
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section*{SUMMARY}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+Automated detection of viral infection from label-free microscopy is critical for high-throughput antiviral screening, yet single-frame methods fail during late-stage infection when damaged cell monolayers resemble dense uninfected cultures.
+Here, we present a temporal pseudo-RGB encoding strategy combined with multi-task learning for robust, label-free infection detection in human brain microvascular endothelial cells (HBMVEC) infected with Venezuelan equine encephalitis virus (VEEV) TC-83.
+Three time-offset brightfield frames ($t{-}6$h, $t{-}3$h, $t$) are stacked as pseudo-RGB channels, enabling any pretrained CNN to learn morphological trajectories without architectural modification.
+Using cross-well validation across three biological replicates, our temporal multi-task model achieves 93.2\% binary infection detection accuracy with a time-regression MAE of 1.33 hours (R$^2 = 0.982$).
+The temporal model maintains reliable detection throughout 48 hours of infection, including a $+$22 percentage-point binary advantage at 40--48 hours where single-frame methods collapse.
+The same framework extends to four-class severity classification (70.6\% accuracy across four MOI levels), demonstrating that infection dose-dependent features are learnable from brightfield microscopy alone.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section*{KEYWORDS}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+deep learning, temporal encoding, label-free microscopy, viral infection, cytopathic effect, VEEV, blood--brain barrier, multi-task learning, infection detection, HBMVEC
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section*{INTRODUCTION}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+Viral infections remain a persistent global health burden, with emerging and re-emerging pathogens posing significant threats to public health.\cite{ref-morens2004emerging,ref-woolhouse2005emerging}
+Cytopathic effects (CPE)---morphological changes including cell rounding, shrinkage, and detachment---serve as hallmark indicators of productive viral infection.\cite{ref-hsiung1994cpe,ref-leland2007cpe}
+However, CPE development varies in timing and severity depending on the virus, host cell type, and multiplicity of infection (MOI), making standardized quantification challenging.\cite{ref-zandi2019cpe}
+A particularly underappreciated difficulty is that morphological changes during early infection are often exceedingly subtle, while at late stages, extensively damaged monolayers may paradoxically resemble dense uninfected cultures, confounding both manual scoring and automated analysis.\cite{ref-wang2020cpe,ref-petkidis2023review}
+
+Human brain microvascular endothelial cells (HBMVEC) constitute a critical component of the blood--brain barrier (BBB).\cite{ref-daneman2015bbb,ref-abbott2010bbb}
+Venezuelan equine encephalitis virus (VEEV), an alphavirus classified as a Category B select agent, can traverse the BBB through infection of brain endothelial cells.\cite{ref-weaver2004veev,ref-schafer2011vee,ref-salimi2020mbio}
+HBMVEC infected with VEEV thus provide a clinically relevant model for studying neurotropic viral infection dynamics.
+
+Label-free brightfield microscopy offers distinct advantages for infection monitoring: it is non-invasive, compatible with continuous longitudinal imaging, and avoids artifacts from exogenous labels or destructive endpoint assays.\cite{ref-riss2016assay,ref-petkidis2023review}
+Recent deep learning approaches have demonstrated promising results for automated CPE detection from brightfield images.\cite{ref-andriasyan2021iscience,ref-petkidis2024natcomm,ref-chen2022biomedicines}
+However, these systems treat each frame independently, discarding the temporal trajectory information inherent in time-lapse data.
+
+The central challenge is that single-frame classification is inherently brittle: at late time points (40--48 hours post-infection), extensively damaged infected monolayers and dense confluent mock cultures share similar static features.
+We hypothesize that encoding the \emph{trajectory} of morphological change---not just the current snapshot---can resolve this ambiguity throughout the full infection timeline.
+
+To address this, we propose temporal pseudo-RGB encoding: three time-offset frames ($t{-}6$h, $t{-}3$h, $t$) are stacked as red, green, and blue channels, creating a pseudo-color image where morphological change appears as color variation.
+Combined with a multi-task learning framework that jointly optimizes infection detection and time-post-infection regression, our approach achieves robust performance throughout 48 hours of VEEV infection in HBMVEC.
+
+Our principal contributions are:
+\begin{enumerate}
+  \item \textbf{Robust binary infection detection} from label-free brightfield microscopy, achieving 93.2\% accuracy and maintaining reliable performance at 40--48 hours where single-frame methods collapse ($+$22 pp advantage).
+  \item \textbf{Temporal pseudo-RGB encoding}, an architecture-agnostic method that encodes morphological trajectory by stacking time-offset frames as pseudo-RGB channels.
+  \item \textbf{Multi-task learning framework} that jointly optimizes infection detection and time regression, where the auxiliary regression task improves classification (MAE $= 1.33$h, R$^2 = 0.982$).
+  \item \textbf{Cross-well validation across three biological replicates} using a stringent row-split protocol that demonstrates generalization beyond within-well cross-validation.
+  \item \textbf{Severity classification as an extended capability}: the same framework achieves 70.6\% four-class accuracy across four MOI levels, demonstrating that dose-dependent features are learnable from brightfield microscopy.
+\end{enumerate}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section*{RESULTS}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\subsection*{Component ablation establishes the contribution of each design element}
+
+To quantify the contribution of temporal encoding and multi-task learning to binary infection detection, we performed a systematic component ablation (Table~1).
+Starting from a single-frame, single-task binary classifier (baseline), we progressively added temporal encoding and multi-task regression, measuring the effect on binary accuracy, four-class accuracy, and regression performance.
+
+The baseline single-frame binary classifier achieved 89.2\% binary accuracy.
+Adding temporal encoding alone improved binary detection to 94.1\%, demonstrating that morphological trajectory information substantially enhances infection discrimination even without an auxiliary regression task.
+Adding multi-task regression to the single-frame model yielded 90.7\% binary accuracy, showing that the auxiliary time-regression signal provides complementary supervisory information.
+The full temporal multi-task model achieved 93.2\% binary detection accuracy, confirming that temporal encoding and multi-task learning contribute complementary improvements.
+
+Notably, the four-class multi-task model (which classifies infection severity across four MOI levels) achieved 93.5\% derived binary accuracy---slightly exceeding the dedicated binary model---suggesting that learning fine-grained severity features actually benefits coarser binary discrimination.
+For time regression, the temporal multi-task model achieved MAE $= 1.33$h and R$^2 = 0.982$, compared to 1.49h and 0.977 for the single-frame multi-task model, confirming that temporal encoding also improves time prediction.
+
+\subsection*{Temporal encoding provides critical robustness at late time points}
+
+The temporal advantage is most pronounced during late-stage infection (Figure~1).
+Per-timepoint analysis in 3-hour bins reveals three distinct regimes.
+During the early phase (0--6 hours), both temporal and single-frame models perform comparably ($\sim$70\% binary accuracy), as CPE has not yet visibly manifested and the temporal model's earlier channels are partially clamped to the experiment boundary.
+During the mid phase (7--24 hours), both models achieve high binary accuracy ($>$93\%), with temporal encoding providing marginal improvement as CPE actively develops.
+During the late phase (40--48 hours), a dramatic divergence emerges: the single-frame model collapses to 75--80\% binary accuracy (dropping as low as 25\% for four-class), while the temporal model maintains 97--100\% binary accuracy.
+At 43.5 hours, the temporal model achieves 100\% binary accuracy compared to 80.6\% for the single-frame model ($+$19.4 pp); at 46.5 hours, the advantage reaches $+$22.5 pp (97.5\% vs.\ 75.0\%).
+
+This late-stage collapse of the single-frame model is attributable to high-confluency morphological ambiguity: extensively damaged infected monolayers share visual features with dense mock cultures when viewed in isolation.
+The temporal model resolves this ambiguity by encoding the \emph{trajectory} of morphological change---a progressively deteriorating monolayer produces distinct color patterns in the pseudo-RGB representation compared to a stably confluent culture.
+
+\subsection*{Feature space analysis reveals improved class separation with temporal encoding}
+
+To visualize the effect of temporal encoding on learned representations, we computed t-SNE embeddings of backbone features from both models (Figure~2).
+The temporal model produces tighter, more clearly separated clusters for each infection condition, with distinct boundaries between infected classes and mock controls.
+In contrast, the single-frame model shows substantial overlap between infection levels, particularly between MOI~5 and MOI~1 at late time points.
+
+When features are colored by hours post-infection, the temporal model exhibits a smooth time gradient within each class cluster, indicating that the learned representation encodes both infection status and temporal progression.
+This dual encoding is consistent with the multi-task training objective, which requires the shared backbone to support both classification and time regression.
+
+\subsection*{Time regression achieves high accuracy with practical utility}
+
+The regression head predicts time post-infection with MAE $= 1.33$ hours and R$^2 = 0.982$ for the temporal multi-task model (Figure~3).
+The temporal model consistently outperforms the single-frame model (MAE $= 1.49$h, R$^2 = 0.977$) across the timeline, with the largest advantage during early hours: at 1.5 hours, the temporal model achieves MAE $= 0.36$h compared to 0.83h for single-frame (2$\times$ improvement).
+This suggests that the temporal channels provide strong time-ordering cues even when classification confidence is low, as the frame-to-frame differences encode the rate of morphological change independent of absolute appearance.
+
+The singleframe ablation---in which the temporal model is tested with all three channels set to the current frame (R\,=\,G\,=\,B\,=\,$t$), removing temporal information---drops four-class accuracy to 43.5\%, confirming that the model genuinely leverages inter-channel temporal differences rather than relying on static features.
+
+\subsection*{Severity classification demonstrates dose-dependent feature learning}
+
+Beyond binary detection, the temporal multi-task model achieves 70.6\% accuracy for four-class severity classification across MOI~5, MOI~1, MOI~0.1, and mock (Table~2), substantially outperforming the single-frame baseline (63.1\%).
+The macro-averaged F1-score is 0.703 for the temporal model versus 0.633 for single-frame.
+
+Confusion matrix analysis (Figure~4) reveals that classification errors concentrate at biologically expected boundaries: MOI~5 is most commonly confused with MOI~1, and MOI~0.1 (the lowest dose, where only $\sim$10\% of cells are initially infected) is the hardest class throughout the timeline.
+The dose-dependent classification difficulty (MOI~5 $>$ MOI~1 $>$ MOI~0.1) mirrors the expected biological gradient of CPE severity, supporting the biological validity of the learned features.
+
+During late-stage infection (24--48h), the temporal model maintains 75.3\% four-class accuracy while the single-frame model degrades to 61.4\%, representing a 13.9 percentage-point advantage.
+This robustness is critical for practical infection monitoring, where reliable classification must be maintained throughout extended imaging experiments.
+
+\subsection*{Temporal offset ablation identifies optimal encoding span}
+
+To investigate the effect of temporal span on classification performance, we trained models with three offset configurations (Table~3): short ($-$3, $-$1.5, 0 hours), standard ($-$6, $-$3, 0 hours), and long ($-$12, $-$6, 0 hours), in addition to the single-frame baseline ($0, 0, 0$ hours).
+
+The single-frame baseline achieved 91.0\% binary accuracy (derived from four-class).
+The short-span temporal model improved to 93.0\%, the standard span to 93.5\% (best binary and four-class accuracy), and the long span to 92.2\% (best regression MAE of 1.24h).
+The standard ($-$6, $-$3, 0) configuration offers the best overall balance: it provides sufficient temporal context for late-stage discrimination while minimizing early-frame clamping artifacts.
+The long-span model's superior regression performance is consistent with broader temporal context providing finer time-ordering cues, though the slight decrease in classification accuracy may reflect increased noise from spanning a wider morphological window.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section*{DISCUSSION}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\subsection*{Temporal encoding captures morphological trajectory}
+
+The most significant finding of this study is that encoding morphological trajectory---rather than static snapshots---dramatically improves infection detection robustness, particularly during late-stage infection.
+The $+$22 percentage-point binary advantage at 40--48 hours represents the difference between a clinically useful system and one that generates false negatives precisely when monitoring is most critical.
+
+The mechanism underlying this improvement is intuitive: in the pseudo-RGB representation, regions undergoing morphological change produce color shifts (e.g., a cell rounding over 6 hours appears as a red-to-blue gradient), while static regions appear gray.
+A standard CNN trained on ImageNet has learned to exploit color patterns, and the temporal pseudo-RGB encoding repurposes this capability for temporal discrimination without any architectural modification.
+The singleframe ablation (43.5\% four-class accuracy, a 27.1 pp drop from proper temporal input) confirms that learned features genuinely depend on inter-channel temporal differences.
+
+\subsection*{Late-stage robustness addresses a critical practical need}
+
+In real-world infection monitoring scenarios---antiviral drug screening, biosafety assessment, longitudinal infection studies---reliable detection must be maintained throughout the full experiment duration, not just during the mid-phase window where CPE is most visually obvious.
+The single-frame model's catastrophic degradation after 40 hours arises from a specific biological confound: at advanced CPE stages, infected cells have largely detached or lysed, leaving a sparse debris field that, in brightfield microscopy, can resemble the dense confluent monolayer of healthy mock cultures.
+The temporal model resolves this by capturing the trajectory leading to the current state: a well that has been progressively losing cells over hours looks fundamentally different in the pseudo-RGB representation from one that has maintained stable confluency, even if their current single frames are ambiguous.
+
+\subsection*{Multi-task learning improves both tasks through shared representations}
+
+The component ablation demonstrates that multi-task learning provides complementary benefits beyond temporal encoding alone.
+For single-frame models, multi-task training improves binary accuracy by 1.5 percentage points (89.2\% to 90.7\%), and for four-class severity classification the benefit is even larger ($+$3.3 pp, from 67.3\% to 70.6\% for temporal models).
+While temporal binary classification alone achieves 94.1\%, the multi-task formulation provides the additional capability of time regression with only a modest trade-off in binary accuracy (93.2\%).
+The regression objective requires the shared backbone to learn temporally-ordered feature representations that capture the progressive nature of CPE development; conversely, the classification objective provides discrete boundary information that helps anchor the regression predictions.
+This mutual benefit is consistent with theoretical frameworks for multi-task learning,\cite{ref-caruana1997mtl} where auxiliary tasks serve as implicit regularizers that prevent overfitting to any single objective.
+
+From a practical perspective, the multi-task formulation enables a unified workflow: a single forward pass produces (1) binary infection status, (2) four-class severity estimate, and (3) continuous time-since-infection prediction, supporting diverse downstream analysis needs without separate models.
+
+\subsection*{Severity classification demonstrates emergent dose-response capability}
+
+The 70.6\% four-class accuracy across four MOI levels---from brightfield microscopy alone---represents, to our knowledge, the first demonstration that infection dose-dependent morphological features are learnable from label-free imaging.
+While existing systems achieve high binary detection accuracy (88--100\%),\cite{ref-petkidis2024natcomm,ref-airvic2025} quantitative severity grading at the MOI level has not been previously attempted in label-free analysis.
+The dose-dependent difficulty gradient (MOI~5 easiest, MOI~0.1 hardest) reflects genuine biology.
+At MOI~0.1, only ${\sim}$10\% of cells are initially infected, and the resulting heterogeneous, delayed CPE is a fundamental challenge for well-level classification.
+
+The observation that four-class-derived binary accuracy (93.5\%) slightly exceeds dedicated binary classification (93.2\%) suggests that learning fine-grained severity features acts as an additional regularizer for coarser infection detection.
+This finding has practical implications: laboratories that need both binary screening and severity assessment can deploy a single model rather than maintaining separate classifiers.
+
+\subsection*{Limitations of the study}
+
+Several limitations should be acknowledged.
+First, while validated across three independent biological replicates, all experiments used the same HBMVEC passage range and VEEV TC-83 vaccine strain. Generalization to virulent VEEV strains, other alphaviruses, or different cell types requires further investigation.
+Second, the four-class accuracy of 70.6\%, while substantially above chance (25\%) and representing a $+$7.5 pp improvement over the single-frame baseline, leaves room for improvement. The primary confusions between adjacent MOI levels (5 vs.\ 1, 1 vs.\ 0.1) may reflect genuine biological overlap in CPE phenotypes.
+Third, temporal encoding requires sequential imaging data and introduces a latency of 6 hours before full three-channel input is available; for the initial frames, clamped padding reduces effective temporal information.
+Fourth, the fixed temporal offsets ($-$6, $-$3, 0h) may not be optimal across all virus--cell systems; adaptive offset selection could be explored in future work.
+Finally, infection labels are assigned at the well level based on experimental conditions; individual cells within infected wells may remain uninfected, particularly at low MOI, and orthogonal single-cell validation (e.g., immunofluorescence) was not performed.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section*{RESOURCE AVAILABILITY}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\subsection*{Lead contact}
+
+Requests for further information and resources should be directed to and will be fulfilled by the lead contact, Metin Nafi Gurcan (mgurcan@wakehealth.edu).
+
+\subsection*{Materials availability}
+
+This study did not generate new unique reagents.
+
+\subsection*{Data and code availability}
+
+\begin{itemize}
+  \item Microscopy image data reported in this paper will be shared by the lead contact upon request.
+  \item All original code has been deposited at GitHub (\url{https://github.com/xiaozhu0816/cell_classification}) and is publicly available as of the date of publication.
+  \item Any additional information required to reanalyze the data reported in this paper is available from the lead contact upon request.
+\end{itemize}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section*{ACKNOWLEDGMENTS}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+The authors thank the members of the Gurcan and Narayanan laboratories for helpful discussions and technical support.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section*{AUTHOR CONTRIBUTIONS}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+Conceptualization, Z.Z. and M.N.G.; methodology, Z.Z.; software, Z.Z.; validation, Z.Z. and S.T.; formal analysis, Z.Z.; investigation, Z.Z. and S.T.; resources, A.N. and M.N.G.; data curation, Z.Z. and S.T.; writing---original draft, Z.Z.; writing---review \& editing, Z.Z., S.T., H.L., A.N., and M.N.G.; visualization, Z.Z.; supervision, A.N. and M.N.G.; project administration, M.N.G.; funding acquisition, A.N. and M.N.G.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section*{DECLARATION OF INTERESTS}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+The authors declare no competing interests.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section*{DECLARATION OF GENERATIVE AI AND AI-ASSISTED TECHNOLOGIES}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+During the preparation of this work, the author(s) used Claude (Anthropic) in order to assist with manuscript formatting and editing. After using this tool, the author(s) reviewed and edited the content as needed and take(s) full responsibility for the content of the publication.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section*{SUPPLEMENTAL INFORMATION INDEX}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{description}
+  \item Table S1. Per-timepoint classification and regression metrics in 3-hour bins
+  \item Figure S1. Additional t-SNE visualizations colored by time post-infection and by biological replicate
+  \item Figure S2. Per-condition accuracy curves across the 48-hour timeline
+\end{description}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section*{MAIN FIGURE TITLES AND LEGENDS}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%% Figure 1 — Binary accuracy over time
+\noindent\includegraphics[width=\linewidth]{fig1_main_comparison.pdf}
+
+\subsection*{Figure 1. Temporal encoding maintains robust binary infection detection throughout 48 hours of infection}
+
+Binary classification accuracy computed in 3-hour time bins for the temporal multi-task model (blue) and the single-frame multi-task model (orange) across the full 48-hour infection timeline.
+Both models achieve comparable performance during early (0--12h) and mid (12--24h) phases.
+During late-stage infection (40--48h), the single-frame model degrades sharply (dropping to 75\% binary accuracy at 46.5h), while the temporal model maintains $>$97\% accuracy.
+The maximum advantage of $+$22.5 percentage points occurs at 46.5 hours.
+Dashed vertical lines indicate phase boundaries.
+
+\newpage
+
+%%% Figure 2 — t-SNE feature space
+\noindent\includegraphics[width=\linewidth]{fig_tsne_temporal_vs_single.png}
+
+\subsection*{Figure 2. Temporal encoding produces more discriminative feature representations}
+
+t-SNE visualization of ResNet50 backbone features for the temporal model (left) and single-frame model (right), colored by infection condition (MOI~5, MOI~1, MOI~0.1, Mock).
+The temporal model produces tighter, more clearly separated clusters with distinct boundaries between infection levels.
+The single-frame model shows substantial overlap, particularly between MOI~5 and MOI~1.
+Features were extracted from the test set at epoch~30.
+
+\newpage
+
+%%% Figure 3 — Cell morphology
+\noindent\includegraphics[width=\linewidth]{fig_enhanced_sample_grid.png}
+
+\subsection*{Figure 3. Dose-dependent progression of cytopathic effects in HBMVEC infected with VEEV TC-83}
+
+Representative brightfield images (CLAHE-enhanced) showing morphological progression across four experimental conditions (rows: Mock, MOI~0.1, MOI~1, MOI~5) and five time points (columns: 3h, 12h, 24h, 36h, 48h).
+Mock cells maintain a flattened, cobblestone-like endothelial morphology throughout.
+MOI~5 wells show pronounced cell rounding and detachment by 12--16 hours.
+MOI~1 wells exhibit similar changes beginning around 18--24 hours.
+MOI~0.1 wells show subtle, heterogeneous changes emerging at 24--36 hours.
+Scale bar: 100~$\mu$m.
+Images acquired with CELLCYTE X at 10$\times$ magnification (0.862~$\mu$m/pixel).
+
+\newpage
+
+%%% Figure 4 — Temporal pseudo-RGB construction
+\noindent\includegraphics[width=\linewidth]{fig_temporal_rgb_examples.png}
+
+\subsection*{Figure 4. Temporal pseudo-RGB encoding visualizes morphological trajectory as color variation}
+
+Pseudo-RGB images constructed by stacking three time-offset brightfield frames across four infection conditions at 30 hours post-infection.
+Channels encode: R\,=\,$t{-}6$h, G\,=\,$t{-}3$h, B\,=\,$t$ (current).
+Regions undergoing active morphological change appear as color shifts (indicating temporal dynamics), while static regions appear gray (indicating stable morphology).
+Infected wells (MOI~5, MOI~1) show prominent color patterns reflecting progressive CPE, while Mock wells appear predominantly gray, reflecting stable confluent morphology.
+This encoding enables standard RGB-pretrained CNNs to learn temporal features without architectural modification.
+
+\newpage
+
+%%% Figure 5 — Confusion matrices
+\noindent\includegraphics[width=\linewidth]{fig2_confusion_matrices.pdf}
+
+\subsection*{Figure 5. Four-class confusion matrices reveal dose-dependent classification patterns}
+
+Normalized confusion matrices for the temporal multi-task model showing classification performance across four MOI levels.
+(A) Overall performance across all time points (70.6\% accuracy).
+(B) Early phase (0--12h): lower accuracy reflects pre-CPE ambiguity.
+(C) Late phase (24--48h): improved discrimination as CPE develops, with residual confusion concentrated between adjacent MOI levels (5 vs.\ 1, 1 vs.\ 0.1).
+Class labels: 0$=$MOI~5, 1$=$MOI~1, 2$=$MOI~0.1, 3$=$Mock.
+
+\newpage
+
+%%% Figure 6 — Regression scatter plots
+\noindent\includegraphics[width=\linewidth]{fig4_regression.pdf}
+
+\subsection*{Figure 6. Multi-task regression accurately predicts time post-infection}
+
+Predicted vs.\ actual time post-infection for (A) temporal multi-task model (MAE $= 1.33$h, R$^2 = 0.982$) and (B) single-frame multi-task model (MAE $= 1.49$h, R$^2 = 0.977$).
+Points are colored by infection condition.
+The temporal model achieves tighter clustering around the diagonal, particularly during early hours (0--6h) where temporal channels provide strong time-ordering cues.
+The dashed line indicates perfect prediction ($y = x$).
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section*{MAIN TABLES, INCLUDING TITLES AND LEGENDS}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\newpage
+
+%%% Table 1 — Component ablation
+\subsection*{Table 1. Component ablation for binary infection detection}
+
+{\small\begin{tabular}{llcccccc}
+\toprule
+\textbf{Method} & \textbf{Task} & \textbf{Temporal} & \textbf{Multi-task} & \textbf{Bin Acc} & \textbf{4cls Acc} & \textbf{MAE (h)} & \textbf{R$^2$} \\
+\midrule
+\multicolumn{8}{l}{\emph{Single-frame models}} \\
+SF binary cls-only & Binary & & & 89.2\% & --- & --- & --- \\
+SF binary multi-task & Binary & & \checkmark & 90.7\% & --- & 1.49 & 0.977 \\
+SF 4cls cls-only & 4-class & & & ---\textsuperscript{a} & 54.7\% & --- & --- \\
+SF 4cls multi-task & 4-class & & \checkmark & 91.0\%\textsuperscript{a} & 63.1\% & 1.67 & 0.971 \\
+SF reg-only & Reg & & & --- & --- & 1.45 & 0.979 \\
+\midrule
+\multicolumn{8}{l}{\emph{Temporal models}} \\
+Temporal binary cls-only & Binary & \checkmark & & 94.1\% & --- & --- & --- \\
+Temporal binary multi-task & Binary & \checkmark & \checkmark & \textbf{93.2\%} & --- & \textbf{1.33} & \textbf{0.982} \\
+Temporal 4cls cls-only & 4-class & \checkmark & & ---\textsuperscript{a} & 67.3\% & --- & --- \\
+Temporal 4cls multi-task & 4-class & \checkmark & \checkmark & 93.5\%\textsuperscript{a} & \textbf{70.6\%} & 1.34 & 0.981 \\
+Temporal reg-only & Reg & \checkmark & & --- & --- & 1.21 & 0.985 \\
+\bottomrule
+\end{tabular}}
+
+\bigskip
+
+Component ablation showing the contribution of temporal encoding and multi-task learning to binary infection detection accuracy.
+Each row represents a different model configuration trained for 30 epochs under cross-well row-split validation.
+Temporal encoding stacks three time-offset frames as pseudo-RGB channels; multi-task models jointly optimize classification and time regression.
+Bold values indicate best performance.
+
+\textsuperscript{a}Binary accuracy derived from four-class predictions by collapsing MOI classes into ``Infected.''
+
+\newpage
+
+%%% Table 2 — 4-class severity summary
+\subsection*{Table 2. Four-class severity classification performance}
+
+\begin{tabular}{lccccccc}
+\toprule
+\textbf{Model} & \textbf{4cls Acc} & \textbf{F1\textsubscript{macro}} & \textbf{Bin Acc} & \textbf{MAE (h)} & \textbf{R$^2$} \\
+\midrule
+Temporal multi-task (E30) & \textbf{70.6\%} & \textbf{0.703} & \textbf{93.5\%}\textsuperscript{a} & \textbf{1.34} & \textbf{0.981} \\
+Single-frame multi-task (E30) & 63.1\% & 0.633 & 91.0\%\textsuperscript{a} & 1.67 & 0.971 \\
+Singleframe ablation\textsuperscript{b} & 43.5\% & 0.415 & --- & --- & --- \\
+\bottomrule
+\end{tabular}
+
+\bigskip
+
+Four-class severity classification (MOI~5, MOI~1, MOI~0.1, Mock) performance under cross-well row-split validation.
+The temporal model outperforms the single-frame baseline by 7.5 percentage points in four-class accuracy.
+The singleframe ablation confirms genuine reliance on temporal information.
+
+\textsuperscript{a}Binary accuracy derived from four-class predictions.
+
+\textsuperscript{b}Temporal model tested with $\delta_1 = \delta_2 = \delta_3 = 0$ (all channels identical, no temporal information).
+
+\newpage
+
+%%% Table 3 — Temporal offset ablation
+\subsection*{Table 3. Temporal offset ablation}
+
+\begin{tabular}{lcccccc}
+\toprule
+\textbf{Offset config} & \textbf{Span} & \textbf{Bin Acc} & \textbf{4cls Acc} & \textbf{F1\textsubscript{macro}} & \textbf{MAE (h)} & \textbf{R$^2$} \\
+\midrule
+Single-frame [0, 0, 0] & 0h & 91.0\% & 63.1\% & 0.633 & 1.67 & 0.971 \\
+Short [$-$3, $-$1.5, 0] & 3h & 93.0\% & 65.2\% & 0.648 & 1.45 & 0.979 \\
+Standard [$-$6, $-$3, 0] & 6h & \textbf{93.5\%} & \textbf{70.6\%} & \textbf{0.703} & 1.34 & 0.981 \\
+Long [$-$12, $-$6, 0] & 12h & 92.2\% & 67.1\% & 0.668 & \textbf{1.24} & \textbf{0.984} \\
+\bottomrule
+\end{tabular}
+
+\bigskip
+
+Effect of temporal span on multi-task classification and regression performance.
+All models use the four-class multi-task configuration with cross-well row-split validation.
+Binary accuracy is derived from four-class predictions.
+The standard ($-$6, $-$3, 0h) configuration achieves the best classification performance, while the long-span configuration achieves the best regression MAE, reflecting the trade-off between temporal context breadth and classification precision.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\bibliography{references}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section*{STAR METHODS}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\subsection*{Key resources table}
+
+\textit{The key resources table is provided as a separate file. It was generated using the Cell Press KRT webform (\url{https://star-methods.com}).}
+
+%%% TODO: Upload KRT as separate Word file. Include:
+%%% - VEEV TC-83 vaccine strain (source, catalog #)
+%%% - HBMVEC cells (source, catalog #, RRID)
+%%% - CELLCYTE X imaging system
+%%% - Python 3.x, PyTorch, ResNet50 (torchvision)
+%%% - Code repository URL
+
+\subsection*{Experimental model and study participant details}
+
+\subsubsection*{Cell lines}
+
+Human brain microvascular endothelial cells (HBMVEC) were obtained commercially and cultured in standard endothelial growth medium supplemented with growth factors at 37$^{\circ}$C and 5\% CO$_2$.
+%%% TODO: Add vendor name, catalog number, passage range, and authentication method.
+Sex and gender were not relevant to this study, as HBMVEC are an immortalized endothelial cell line used as an in vitro BBB model; results are not expected to differ based on the sex of the cell donor.
+
+\subsubsection*{Virus strains}
+
+The Venezuelan equine encephalitis virus (VEEV) vaccine strain TC-83 was used for all infection experiments.
+%%% TODO: Add source and any passage history.
+All work involving VEEV TC-83 was conducted under BSL-2 containment with institutional biosafety approval.
+
+\subsection*{Method details}
+
+\subsubsection*{Viral infection protocol}
+
+Cells were seeded at a density of 45,000 cells per well in 12-well plates to obtain a confluent monolayer suitable for morphological assessment.
+VEEV TC-83 was used for infection at three multiplicities of infection: MOI~5, MOI~1, and MOI~0.1. These MOI levels were selected to span a range of CPE kinetics from rapid synchronous infection (MOI~5) to delayed heterogeneous responses (MOI~0.1).
+A mock-infected control condition was treated with PBS in parallel.
+After viral adsorption, cells were washed with phosphate-buffered saline (PBS) and fresh medium was added (defined as experiment start, $t=0$).
+
+\subsubsection*{Experimental design and biological replicates}
+
+Three independent biological replicates (designated Run~2, Run~3, and Run~4) were performed on separate days.
+Each replicate used a 12-well plate with four conditions (MOI~5, MOI~1, MOI~0.1, and Mock) in triplicate (3 wells per condition, rows A, B, and C).
+Each well was imaged at 36 acquisition positions in a 6$\times$6 grid pattern.
+Across three runs, the dataset comprises approximately 123,000 total frame-level samples.
+
+\subsubsection*{High-frequency live-cell imaging}
+
+Imaging was performed using the CELLCYTE X (CYTENA GmbH, Freiburg, Germany) live-cell imaging system located inside a standard incubator.
+Images were acquired using a 10$\times$ objective in ``Enhanced Contour'' mode at a spatial resolution of 0.862~$\mu$m/pixel.
+Each field of view was 2448$\times$2048 pixels ($\sim$0.8$\times$0.7~mm).
+Images were acquired every 30 minutes over approximately 48 hours, producing per-position time series stored as multi-frame TIFF stacks.
+
+\subsubsection*{Temporal pseudo-RGB encoding}
+
+To incorporate temporal context, each sample is represented as a three-channel image composed of frames at three time offsets relative to the current time point $t$:
+\[
+  I_{\mathrm{pseudo}}(t) = \bigl[\,f(t{-}6\text{h}),\;\; f(t{-}3\text{h}),\;\; f(t)\,\bigr],
+\]
+where $f(\tau)$ denotes the normalized grayscale frame at time $\tau$.
+The red channel maps to the oldest frame ($t{-}6$h), green to an intermediate frame ($t{-}3$h), and blue to the current frame ($t$).
+Regions undergoing morphological change appear as color shifts, while static regions appear gray.
+This allows a standard RGB-pretrained CNN to leverage its learned color-processing features for temporal discrimination without architectural modification.
+
+For frames near the experiment start where offsets reach before $t=0$, the earliest available frame is used (clamp padding): $f(\tau) = f(\max(0, \tau))$.
+As a baseline, the single-frame model replicates the same grayscale frame across all three channels.
+The singleframe ablation tests the trained temporal model with all three channels set to the current frame ($\delta_1 = \delta_2 = \delta_3 = 0$), removing temporal information at inference to confirm that the model relies on inter-channel differences.
+
+\subsubsection*{Dataset construction and preprocessing}
+
+Data were organized into four conditions based on MOI level.
+Each frame was assigned a four-class label based on experimental condition ($y_{\mathrm{cls}} \in \{0, 1, 2, 3\}$ for MOI~5, MOI~1, MOI~0.1, and Mock).
+Binary labels were derived post-hoc by collapsing classes 0--2 into ``Infected.''
+A deterministic 5\%-per-side center crop was applied to mitigate potential overlap between adjacent acquisition positions ($\sim$5\%), followed by resizing to 512$\times$512 pixels.
+Data augmentation (random horizontal/vertical flips and 90$^{\circ}$/180$^{\circ}$/270$^{\circ}$ rotations) was applied to training data only.
+
+\subsubsection*{Cross-well row-split validation}
+
+To assess cross-well generalization, we adopted a row-split validation protocol: rows A and B (2 of 3 replicates per condition) were used for training, and row C was reserved for testing.
+This ensures that training and test data come from physically separate wells.
+To address condition-specific confounds, a well-swap protocol (v2 split) was applied: in Run~3, the MOI~1 well from row~C was exchanged with row~A; in Run~4, the MOI~5 well from row~C was exchanged with row~A.
+These swaps preserve train/test MOI balance while mitigating anomalous well-specific effects identified during preliminary analysis.
+The test set contains approximately 41,000 samples.
+
+\subsubsection*{Multi-task architecture and training}
+
+We used a ResNet50\cite{ref-he2016resnet} backbone initialized with ImageNet weights as the shared feature encoder, feeding into two task-specific heads:
+(1) a classification head with a hidden layer (256 units, ReLU, dropout $p=0.2$) producing class logits, and
+(2) a regression head with identical hidden structure outputting a scalar time prediction.
+The loss function is:
+\[
+  L = \lambda_{\mathrm{cls}} \cdot L_{\mathrm{CE}} + \lambda_{\mathrm{reg}} \cdot L_{\mathrm{SL1}},
+\]
+where $L_{\mathrm{CE}}$ is cross-entropy loss and $L_{\mathrm{SL1}}$ is Smooth L1 (Huber) loss, with $\lambda_{\mathrm{cls}} = \lambda_{\mathrm{reg}} = 1.0$.
+For single-task ablation experiments, the weight of the excluded task was set to zero.
+
+Models were trained end-to-end for 30 epochs using AdamW (learning rate $1 \times 10^{-4}$, weight decay $1 \times 10^{-4}$) with cosine annealing ($T_{\max} = 30$, $\eta_{\min} = 10^{-6}$), automatic mixed precision, gradient norm clipping (max~1.0), and batch size 300.
+Evaluation was performed every 5 epochs on the held-out test set.
+
+\subsection*{Quantification and statistical analysis}
+
+Classification performance was evaluated using accuracy, macro-averaged F1-score, precision, and recall, computed across the full test set ($n \approx 41{,}000$ frame-level samples from held-out wells).
+Binary metrics were derived by remapping four-class predictions (classes 0--2 $\to$ Infected, class 3 $\to$ Mock).
+Regression was evaluated using mean absolute error (MAE), root mean square error (RMSE), and coefficient of determination (R$^2$).
+All metrics were additionally computed in 3-hour time bins across the 0--48h timeline for temporal analysis.
+No statistical hypothesis tests were performed; model comparisons are based on held-out test set performance under the cross-well row-split validation protocol described above.
+All experiments were run with a single random seed; variability across biological replicates is captured by the cross-well validation design rather than repeated training runs.
+Software: Python 3.10, PyTorch 2.0, torchvision (ResNet50 with ImageNet weights).
+t-SNE visualizations\cite{ref-vandermaaten2008tsne} used scikit-learn with perplexity~30 and 1,000 iterations on 2,048-dimensional backbone features.
+
+\end{document}

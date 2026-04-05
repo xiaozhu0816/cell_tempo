@@ -1,0 +1,72 @@
+# Multi-Task Learning Configuration (Classification + Time Regression)
+# Variant: anti-overlap crop (remove 5% border on each side before resizing)
+#
+# This keeps ALL training settings the same as `multitask_example.yaml` except the crop.
+
+experiment_name: multitask_resnet50_crop5pct
+seed: 42
+
+data:
+  infected_dir: "/isilon/datalake/gurcan_rsch/scratch/WSI/zhengjie/DATA/GMU_cell_1023/HBMVEC/Infected_well/no_labels"
+  uninfected_dir: "/isilon/datalake/gurcan_rsch/scratch/WSI/zhengjie/DATA/GMU_cell_1023/HBMVEC/Uninfected_well/no_labels"
+  infected_label: 1
+  uninfected_label: 0
+
+  split_ratios: [0.7, 0.1, 0.2]
+  split_seed: 123
+
+  batch_size: 128
+  eval_batch_size_multiplier: 2
+  num_workers: 4
+  drop_last: false
+  balance_sampler: false
+
+  transforms:
+    image_size: 512
+    # NEW: remove 5% border (each side) before resizing
+    crop_border_fraction: 0.05
+
+    random_flip: true
+    random_rotation: true
+    color_jitter: false
+    mean: [0.5, 0.5, 0.5]
+    std: [0.25, 0.25, 0.25]
+
+  frames:
+    frames_per_hour: 2.0
+    infected_window_hours: [1, 48]
+    uninfected_window_hours: [0, 48]
+    infected_stride: 1
+    uninfected_stride: 1
+    uninfected_use_all: true
+
+multitask:
+  infection_onset_hour: 1.0
+  clamp_range: [0.0, 48.0]
+  classification_weight: 1.0
+  regression_weight: 1.0
+
+model:
+  name: resnet50
+  pretrained: true
+  num_classes: 2
+  dropout: 0.2
+  train_backbone: true
+  hidden_dim: 256
+  use_cls_conditioning: false
+
+training:
+  epochs: 100
+  amp: true
+  grad_clip: 1.0
+  checkpoint_dir: checkpoints
+
+optimizer:
+  lr: 0.0001
+  weight_decay: 0.0001
+
+scheduler:
+  # NOTE: your CV script uses t_max defaulting to epochs if not set.
+  # Keeping it explicit anyway.
+  t_max: 100
+  eta_min: 0.000001

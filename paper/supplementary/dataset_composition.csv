@@ -1,0 +1,5 @@
+condition,n_samples,n_wells,n_positions
+mock,10368,3,36
+moi01,10368,3,36
+moi1,10368,3,36
+moi5,10368,3,36
