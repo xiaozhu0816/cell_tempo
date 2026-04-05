@@ -379,24 +379,21 @@ The dashed line indicates perfect prediction ($y = x$).
 
 {\small\begin{tabular}{llcccccc}
 \toprule
-\textbf{Method} & \textbf{Task} & \textbf{Temporal} & \textbf{Multi-task} & \textbf{Bin Acc ($\uparrow$)} & \textbf{4cls Acc ($\uparrow$)} & \textbf{MAE (h) ($\downarrow$)} & \textbf{R$^2$ ($\uparrow$)} \\
+\textbf{Method} & \textbf{Task} & \textbf{Temporal} & \textbf{Multi-task} & \textbf{Bin Acc} & \textbf{4cls Acc} & \textbf{MAE (h)} & \textbf{R$^2$} \\
 \midrule
-\multicolumn{8}{l}{\emph{Single-frame, single-task}} \\
+\multicolumn{8}{l}{\emph{Single-frame models}} \\
 SF binary cls-only & Binary & & & 89.2\% & --- & --- & --- \\
-SF 4cls cls-only & 4-class & & & 88.0\%\textsuperscript{a} & 54.7\% & --- & --- \\
 SF reg-only & Reg & & & --- & --- & 1.45 & 0.979 \\
-\midrule
-\multicolumn{8}{l}{\emph{Single-frame, multi-task}} \\
 SF binary multi-task & Binary & & \checkmark & 90.7\% & --- & 1.49 & 0.977 \\
+SF 4cls cls-only & 4-class & & & 88.0\%\textsuperscript{a} & 54.7\% & --- & --- \\
 SF 4cls multi-task & 4-class & & \checkmark & 91.0\%\textsuperscript{a} & 63.1\% & 1.67 & 0.971 \\
+
 \midrule
-\multicolumn{8}{l}{\emph{Temporal, single-task}} \\
-Temporal binary cls-only & Binary & \checkmark & & \textbf{94.1\%} & --- & --- & --- \\
-Temporal 4cls cls-only & 4-class & \checkmark & & 93.8\%\textsuperscript{a} & 67.3\% & --- & --- \\
-Temporal reg-only & Reg & \checkmark & & --- & --- & \textbf{1.21} & \textbf{0.985} \\
-\midrule
-\multicolumn{8}{l}{\emph{Temporal, multi-task}} \\
-Temporal binary multi-task & Binary & \checkmark & \checkmark & 93.2\% & --- & 1.33 & 0.982 \\
+\multicolumn{8}{l}{\emph{Temporal models}} \\
+Temporal binary cls-only & Binary & \checkmark & & 92.1\% & --- & --- & --- \\
+Temporal reg-only & Reg & \checkmark & & --- & --- & 1.41 & 0.979 \\
+Temporal binary multi-task & Binary & \checkmark & \checkmark & \textbf{93.2\%} & --- & \textbf{1.33} & \textbf{0.982} \\
+Temporal 4cls cls-only & 4-class & \checkmark & & 92.8\%\textsuperscript{a} & 65.9\% & --- & --- \\
 Temporal 4cls multi-task & 4-class & \checkmark & \checkmark & 93.5\%\textsuperscript{a} & \textbf{70.6\%} & 1.34 & 0.981 \\
 \bottomrule
 \end{tabular}}
@@ -409,31 +406,6 @@ Temporal encoding stacks three time-offset frames as pseudo-RGB channels; multi-
 Bold values indicate best performance per column. $\uparrow$: higher is better; $\downarrow$: lower is better.
 
 \textsuperscript{a}Binary accuracy derived from four-class predictions by collapsing MOI classes into ``Infected.''
-
-\newpage
-
-%%% Table 2 — 4-class severity summary
-\subsection*{Table 2. Four-class severity classification performance}
-
-\begin{tabular}{lccccccc}
-\toprule
-\textbf{Model} & \textbf{4cls Acc ($\uparrow$)} & \textbf{F1\textsubscript{macro} ($\uparrow$)} & \textbf{Bin Acc ($\uparrow$)} & \textbf{MAE (h) ($\downarrow$)} & \textbf{R$^2$ ($\uparrow$)} \\
-\midrule
-Temporal multi-task (E30) & \textbf{70.6\%} & \textbf{0.703} & \textbf{93.5\%}\textsuperscript{a} & \textbf{1.34} & \textbf{0.981} \\
-Single-frame multi-task (E30) & 63.1\% & 0.633 & 91.0\%\textsuperscript{a} & 1.67 & 0.971 \\
-Singleframe ablation\textsuperscript{b} & 43.5\% & 0.415 & --- & --- & --- \\
-\bottomrule
-\end{tabular}
-
-\bigskip
-
-Four-class severity classification (MOI~5, MOI~1, MOI~0.1, Mock) performance under cross-well row-split validation.
-The temporal model outperforms the single-frame baseline by 7.5 percentage points in four-class accuracy.
-The singleframe ablation confirms genuine reliance on temporal information.
-
-\textsuperscript{a}Binary accuracy derived from four-class predictions.
-
-\textsuperscript{b}Temporal model tested with $\delta_1 = \delta_2 = \delta_3 = 0$ (all channels identical, no temporal information).
 
 \newpage
 
