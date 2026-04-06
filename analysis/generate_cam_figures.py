@@ -302,50 +302,60 @@ def main():
         return False
 
     # ---------------------------------------------------------------------------
-    # Plot: 4 rows × 2 columns (input | CAM overlay)
+    # Plot: 2 rows × 4 columns
+    #   Row 0 = mid-phase  (results[0]=MOI5-mid, results[2]=Mock-mid)
+    #   Row 1 = late-phase (results[1]=MOI5-late, results[3]=Mock-late)
+    #   Cols: [MOI5 input | MOI5 CAM | Mock input | Mock CAM]
     # ---------------------------------------------------------------------------
-    fig, axes = plt.subplots(4, 2, figsize=(7, 12))
+    # results order: 0=MOI5-mid, 1=MOI5-late, 2=Mock-mid, 3=Mock-late
+    grid = [
+        [results[0], results[2]],   # mid-phase:  MOI5, Mock
+        [results[1], results[3]],   # late-phase: MOI5, Mock
+    ]
+    row_labels  = ["Mid-phase\n($t$ = 20 h)", "Late-phase\n($t$ = 40 h)"]
+    col_headers = ["MOI 5 — Input", "MOI 5 — Grad-CAM",
+                   "Mock — Input",  "Mock — Grad-CAM"]
 
-    col_titles = ["Temporal pseudo-RGB input", "Grad-CAM attention"]
-    for j, title in enumerate(col_titles):
-        axes[0, j].set_title(title, fontsize=11, fontweight="bold", pad=8)
+    fig, axes = plt.subplots(
+        2, 4,
+        figsize=(11, 5.8),
+        gridspec_kw={"wspace": 0.04, "hspace": 0.12},
+    )
 
-    for i, r in enumerate(results):
-        # Row label
-        axes[i, 0].set_ylabel(r["label"], fontsize=9, rotation=0,
-                               ha="right", va="center", labelpad=55)
+    for row_i in range(2):
+        moi_r, mock_r = grid[row_i]
 
-        # Input image
-        axes[i, 0].imshow(r["rgb"])
-        axes[i, 0].axis("off")
+        # Col 0: MOI5 input
+        axes[row_i, 0].imshow(moi_r["rgb"])
+        # Col 1: MOI5 CAM
+        axes[row_i, 1].imshow(moi_r["overlay"])
+        # Col 2: Mock input
+        axes[row_i, 2].imshow(mock_r["rgb"])
+        # Col 3: Mock CAM
+        axes[row_i, 3].imshow(mock_r["overlay"])
 
-        # CAM overlay
-        axes[i, 1].imshow(r["overlay"])
-        # Overlay text: Pred class
-        status = "✓" if r["pred_cls"] == r["true_cls"] else "✗"
-        axes[i, 1].set_xlabel(f"Pred: {CLASS_NAMES[r['pred_cls']]} {status}",
-                               fontsize=8, labelpad=2)
-        axes[i, 1].axis("off")
+        for ax in axes[row_i]:
+            ax.axis("off")
 
-        # Quality flag
-        if not r["quality_ok"]:
-            axes[i, 1].text(0.98, 0.02, "low-quality", transform=axes[i, 1].transAxes,
-                            fontsize=7, ha="right", va="bottom", color="red", alpha=0.7)
+        # Row label on the left
+        axes[row_i, 0].set_ylabel(row_labels[row_i], fontsize=10,
+                                   rotation=0, ha="right", va="center",
+                                   labelpad=60)
 
-    # Add colorbar for CAM
+    # Column headers on top row only
+    for j, title in enumerate(col_headers):
+        axes[0, j].set_title(title, fontsize=10, fontweight="bold", pad=5)
+
+    # Single compact colorbar attached to the two CAM columns
     sm = plt.cm.ScalarMappable(cmap="jet", norm=plt.Normalize(0, 1))
     sm.set_array([])
-    cbar = fig.colorbar(sm, ax=axes[:, 1], fraction=0.03, pad=0.03)
+    # Attach to rightmost axes (col 1 and col 3 = CAM columns)
+    cbar = fig.colorbar(sm, ax=axes[:, [1, 3]], fraction=0.018, pad=0.02,
+                        shrink=0.85)
     cbar.set_label("Grad-CAM activation", fontsize=9)
     cbar.set_ticks([0, 0.5, 1])
     cbar.set_ticklabels(["Low", "Mid", "High"])
-
-    fig.suptitle(
-        "Grad-CAM attention maps — temporal multi-task model\n"
-        "Red channels in input: t−6h; Green: t−3h; Blue: t",
-        fontsize=10, y=1.01
-    )
-    fig.tight_layout(h_pad=1.5)
+    cbar.ax.tick_params(labelsize=8)
 
     for ext in ("pdf", "png"):
         out = OUT_DIR / f"figS8_cam_attention.{ext}"

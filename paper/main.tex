@@ -408,13 +408,13 @@ Mock wells achieve consistently high accuracy (0.92--0.98) across all three repl
 
 \subsection*{Figure S8. Grad-CAM attention maps for representative test samples}
 
-Gradient-weighted class activation mapping (Grad-CAM) for four representative test samples from Run~3.
-Each row shows one sample (MOI~5 mid-phase $t=20$h; MOI~5 late-phase $t=40$h; Mock mid-phase $t=20$h; Mock late-phase $t=40$h).
-Left column: enhanced temporal pseudo-RGB composite (R\,=\,$t{-}6$h, G\,=\,$t{-}3$h, B\,=\,$t$; per-channel percentile stretch with $\gamma=0.7$ for display clarity).
-Right column: Jet-colormap Grad-CAM activation overlay, computed with respect to the true class using the final convolutional layer (ResNet50 \texttt{layer4}).
-All four samples were correctly classified (indicated by check marks).
-The activation maps show that the model attends to cell body regions; infected samples at late phase ($t=40$h) tend to show more spatially distributed activations, consistent with progressing monolayer disruption visible in the pseudo-RGB channels.
-These patterns are provided as qualitative interpretability context; formal biological claims would require additional experimental validation.
+Gradient-weighted class activation mapping (Grad-CAM) for four representative test samples from Run~3, arranged in a $2\times4$ grid.
+Rows correspond to time points (top: mid-phase $t=20$h; bottom: late-phase $t=40$h); within each row, columns show: MOI~5 pseudo-RGB input, MOI~5 Grad-CAM overlay, Mock pseudo-RGB input, Mock Grad-CAM overlay.
+Input images are enhanced temporal pseudo-RGB composites (R\,=\,$t{-}6$h, G\,=\,$t{-}3$h, B\,=\,$t$; per-channel percentile stretch with $\gamma=0.7$ for display clarity).
+Grad-CAM activations were computed with respect to the true class using the final convolutional layer (ResNet50 \texttt{layer4}); colorbar indicates relative activation magnitude (Low--Mid--High).
+All four samples were correctly classified.
+The activation maps indicate that the model responds to cell-containing regions throughout the field of view, with no systematic focus on image artifacts or corners.
+These patterns are provided as qualitative context for model interpretability and do not constitute evidence for specific biological mechanisms.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section*{MAIN TABLES, INCLUDING TITLES AND LEGENDS}
