@@ -141,17 +141,17 @@ For time regression within the unified four-class setting, temporal encoding imp
 \subsection*{Temporal encoding provides critical robustness at late time points}
 
 The temporal advantage is most pronounced during late-stage infection (Figure~3).
-Per-timepoint analysis in 3-hour bins reveals three distinct regimes.
+Per-timepoint analysis in 3-hour bins reveals a clear pattern.
 During the early phase (0--6 hours), both temporal and single-frame models perform comparably ($\sim$70\% binary accuracy), as CPE has not yet visibly manifested and the temporal model's earlier channels are partially clamped to the experiment boundary.
-During the mid phase (7--24 hours), both models achieve high binary accuracy ($>$93\%), with temporal encoding providing marginal improvement as CPE actively develops.
+Between 7 and 36 hours, both models achieve high binary accuracy ($>$93\%), with temporal encoding providing marginal improvement as CPE actively develops.
 During the late phase (40--48 hours), a dramatic divergence emerges: the single-frame model collapses to 75--80\% binary accuracy (dropping as low as 25\% for four-class), while the temporal model maintains 97--100\% binary accuracy.
 At 43.5 hours, the temporal model achieves 100\% binary accuracy compared to 80.6\% for the single-frame model ($+$19.4 pp); at 46.5 hours, the advantage reaches $+$22.5 pp (97.5\% vs.\ 75.0\%).
 
 This late-stage collapse of the single-frame model is attributable to high-confluency morphological ambiguity: extensively damaged infected monolayers share visual features with dense mock cultures when viewed in isolation.
 The temporal model resolves this ambiguity by encoding the \emph{trajectory} of morphological change---a progressively deteriorating monolayer produces distinct color patterns in the pseudo-RGB representation compared to a stably confluent culture.
 
-Complementing the late-stage robustness result, per-condition AUROC analysis (Figure~S6) confirms that the unified temporal model achieves AUROC\,$>$\,0.99 across all infection conditions from mid-phase onward and sustains this through the full 46.5-hour imaging period.
-Reliable detection is established early in the experiment for each condition, demonstrating that the model provides consistent performance throughout the entire infection timeline---not only during the mid-phase window where CPE is most visually apparent.
+Complementing the late-stage robustness result, per-condition AUROC analysis (Figure~S6) confirms that the unified temporal model achieves AUROC\,$>$\,0.99 across all infection conditions from approximately 20 hours onward and sustains this through the full 46.5-hour imaging period.
+Reliable detection is established within the first 20 hours for each condition, demonstrating that the model provides consistent performance throughout the entire infection timeline.
 This combination of early detection and late-stage robustness is essential for practical applications such as antiviral screening, where reliable readouts are required across the full duration of an experiment.
 
 \subsection*{Feature space analysis reveals improved class separation with temporal encoding}
@@ -198,7 +198,7 @@ The mechanism underlying this improvement is intuitive: in the pseudo-RGB repres
 A standard CNN trained on ImageNet has learned to exploit color patterns, and the temporal pseudo-RGB encoding repurposes this capability for temporal discrimination without any architectural modification.
 Across the component comparison in Table~1, temporal encoding consistently improves both dedicated binary models and the unified four-class multi-task model, supporting the conclusion that learned features depend on morphological change over time rather than on static appearance alone.
 
-In real-world infection monitoring scenarios---antiviral drug screening, biosafety assessment, longitudinal infection studies---reliable detection must be maintained throughout the full experiment duration, not just during the mid-phase window where CPE is most visually obvious.
+In real-world infection monitoring scenarios---antiviral drug screening, biosafety assessment, longitudinal infection studies---reliable detection must be maintained throughout the full experiment duration, not just during the intermediate window where CPE is most visually obvious.
 The single-frame model's catastrophic degradation after 40 hours arises from a specific biological confound: at advanced CPE stages, infected cells have largely detached or lysed, leaving a sparse debris field that, in brightfield microscopy, can resemble the dense confluent monolayer of healthy mock cultures.
 The temporal model resolves this by capturing the trajectory leading to the current state: a well that has been progressively losing cells over hours looks fundamentally different in the pseudo-RGB representation from one that has maintained stable confluency, even if their current single frames are ambiguous.
 
@@ -279,15 +279,12 @@ During the preparation of this work, the author(s) used Claude (Anthropic) in or
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \begin{description}
-  \item Table S1. Per-class per-phase classification metrics (precision, recall, F1) in 3-hour bins
-  \item Figure S1. Training curves for temporal and single-frame models across 30 epochs
-  \item Figure S2. Dataset composition statistics across runs, conditions, and time points
-  \item Figure S3. Late-stage collapse analysis: per-timepoint accuracy for single-frame vs.\ temporal models
-  \item Figure S4. Confidence trajectories across the 48-hour infection timeline
-  \item Figure S5. Per-phase confusion matrices for each infection condition
-  \item Figure S6. Per-condition binary AUROC over time for the unified temporal model (temporal model only), showing early detection onset and sustained reliability throughout the 48-hour imaging period
+  \item Table S1. Per-class per-time-bin classification metrics (precision, recall, F1) in 3-hour bins
+  \item Figure S4. Predicted infection probability over time for temporal and single-frame models, by condition
+  \item Figure S5. Per-time-window four-class confusion matrices for temporal and single-frame models (0--12h, 12--24h, 24--48h)
+  \item Figure S6. Per-condition binary AUROC over time for the unified temporal model, showing early detection onset and sustained reliability throughout the 48-hour imaging period
   \item Figure S7. Per-well binary classification accuracy heatmap for the unified temporal model across three biological replicates and four infection conditions
-  \item Figure S8. Grad-CAM attention maps for representative infected and mock test samples at mid- and late-phase time points (qualitative interpretability)
+  \item Figure S8. Grad-CAM attention maps for representative infected and mock test samples at two time points ($t=20$h and $t=40$h) (qualitative interpretability)
 \end{description}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -328,7 +325,7 @@ Static regions appear gray; regions undergoing active morphological change appea
 \subsection*{Figure 3. Temporal encoding maintains robust infection detection throughout 48 hours of infection}
 
 Three-panel comparison of the temporal and single-frame models across the 48-hour infection timeline.
-(A) Binary (infected vs.\ mock) accuracy over time: the temporal model (blue) maintains $>$97\% binary accuracy at 40--48h, while the single-frame model (orange, dashed) drops to 75\%. Shaded regions mark the early (0--6h, red) and late (24--48h, blue) infection phases.
+(A) Binary (infected vs.\ mock) accuracy over time: the temporal model (blue) maintains $>$97\% binary accuracy at 40--48h, while the single-frame model (orange, dashed) drops to 75\%. Shaded regions mark the early phase (0--6h, red) and late phase (40--48h, blue) as defined in the text.
 (B) Four-class severity classification accuracy over time: the temporal model sustains stable performance throughout the timeline, whereas the single-frame model collapses sharply at late time points.
 (C) Time-regression MAE over time: the temporal model achieves consistently lower prediction error, with the largest advantage during early hours (0--6h) when temporal channels carry the strongest time-ordering signal.
 
@@ -341,8 +338,8 @@ Three-panel comparison of the temporal and single-frame models across the 48-hou
 
 Row-normalized confusion matrices for the temporal multi-task model evaluated on the held-out test set.
 (A) Overall performance across all time points (70.6\% four-class accuracy): errors concentrate at biologically expected boundaries, with MOI~5 most commonly confused with MOI~1, and MOI~0.1 the most challenging class.
-(B) Early phase (0--12h, 55.3\% accuracy): lower performance reflects pre-CPE ambiguity before morphological changes are visually prominent.
-(C) Late phase (24--48h, 75.3\% accuracy): improved discrimination as CPE develops; errors remain confined to adjacent MOI levels while Mock is classified with 98.7\% accuracy.
+(B) Analysis window 0--12h (55.3\% accuracy): lower performance reflects pre-CPE ambiguity before morphological changes become visually prominent.
+(C) Analysis window 24--48h (75.3\% accuracy): improved discrimination as CPE develops; errors remain confined to adjacent MOI levels while Mock is classified with 98.7\% accuracy.
 
 \newpage
 
@@ -371,6 +368,31 @@ The dashed line indicates perfect prediction ($y = x$).
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section*{SUPPLEMENTARY FIGURE LEGENDS}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\newpage
+
+%%% Figure S4 — Confidence trajectories
+\noindent\includegraphics[width=\linewidth]{figS4_confidence_trajectories.pdf}
+
+\subsection*{Figure S4. Predicted infection probability over time by condition}
+
+Mean predicted P(Infected)\,=\,$1 - P(\text{Mock})$ across the 48-hour imaging period, shown separately for the temporal model (left) and single-frame model (right).
+Each line represents one of the four experimental conditions (MOI~5, MOI~1, MOI~0.1, Mock); shaded bands show $\pm$1 SEM.
+The dashed horizontal line marks the decision boundary ($P = 0.5$).
+In the temporal model, all three infected conditions separate from Mock and stabilize above the decision boundary by approximately 10--20 hours, whereas Mock confidence remains consistently low.
+In the single-frame model, this separation is less stable: infected-condition probabilities decline at late time points ($>$40h) as damaged monolayers acquire visual features similar to dense confluent Mock cultures.
+
+\newpage
+
+%%% Figure S5 — Per-time-window confusion matrices
+\noindent\includegraphics[width=\linewidth]{figS5_confusion_per_phase.pdf}
+
+\subsection*{Figure S5. Four-class confusion matrices by time window}
+
+Row-normalized confusion matrices for the temporal model (top row) and single-frame model (bottom row), computed in three non-overlapping time windows: 0--12h, 12--24h, and 24--48h.
+Values indicate the fraction of true-class samples predicted as each class (row percentages).
+Both models show higher MOI~0.1 confusion during 0--12h, reflecting the sparse initial infection in low-dose wells.
+In the 24--48h window, the temporal model maintains robust discrimination across all four conditions, whereas the single-frame model shows increased Mock confusion for infected classes---consistent with the late-stage morphological ambiguity described in the main text.
 
 \newpage
 
@@ -407,7 +429,7 @@ Mock wells achieve consistently high accuracy (0.92--0.98) across all three repl
 \subsection*{Figure S8. Grad-CAM attention maps for representative test samples}
 
 Gradient-weighted class activation mapping (Grad-CAM) for four representative test samples from Run~3, arranged in a $2\times4$ grid.
-Rows correspond to time points (top: mid-phase $t=20$h; bottom: late-phase $t=40$h); within each row, columns show: MOI~5 pseudo-RGB input, MOI~5 Grad-CAM overlay, Mock pseudo-RGB input, Mock Grad-CAM overlay.
+Rows correspond to time points (top: $t=20$h; bottom: $t=40$h); within each row, columns show: MOI~5 pseudo-RGB input, MOI~5 Grad-CAM overlay, Mock pseudo-RGB input, Mock Grad-CAM overlay.
 Input images are enhanced temporal pseudo-RGB composites (R\,=\,$t{-}6$h, G\,=\,$t{-}3$h, B\,=\,$t$; per-channel percentile stretch with $\gamma=0.7$ for display clarity).
 Grad-CAM activations were computed with respect to the true class using the final convolutional layer (ResNet50 \texttt{layer4}); colorbar indicates relative activation magnitude (Low--Mid--High).
 All four samples were correctly classified.

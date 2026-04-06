@@ -104,7 +104,7 @@ PHASE_KW = dict(alpha=0.08)
 # ── (A) Binary accuracy — primary, most prominent ──────────────────────────
 ax = axes[0]
 ax.fill_betweenx([55, 105],  0,  6, color="#e74c3c", **PHASE_KW)
-ax.fill_betweenx([55, 105], 24, 48, color="#2980b9", **PHASE_KW)
+ax.fill_betweenx([55, 105], 40, 48, color="#2980b9", **PHASE_KW)
 ax.plot(common, [t_met[h]["bacc"] * 100 for h in common],
         "o-", color=C_TMP, lw=2.5, ms=5.5, zorder=3, label="Temporal")
 ax.plot(common, [s_met[h]["bacc"] * 100 for h in common],
@@ -114,17 +114,14 @@ ax.set(xlabel="Hours post-infection",
        ylabel="Binary accuracy (%)",
        xlim=(0, 48), ylim=(55, 102))
 ax.set_title("(A)  Binary detection accuracy", fontweight="bold", pad=8)
-ax.legend(loc="lower right")
 ax.grid(True, alpha=0.2, lw=0.5)
 
-phase_handles = [
-    Patch(color="#e74c3c", alpha=0.3, label="Early (0–6 h)"),
-    Patch(color="#2980b9", alpha=0.3, label="Late (24–48 h)"),
-]
 ax.legend(handles=[
     Line2D([0],[0], color=C_TMP, lw=2.5, marker="o", ms=5.5, label="Temporal"),
     Line2D([0],[0], color=C_SGL, lw=2.5, marker="s", ms=5.5, ls="--", label="Single-frame"),
-] + phase_handles, loc="lower right", fontsize=9)
+    Patch(color="#e74c3c", alpha=0.3, label="Early (0–6 h)"),
+    Patch(color="#2980b9", alpha=0.3, label="Late (40–48 h)"),
+], loc="lower right", fontsize=9)
 
 ax.spines["top"].set_visible(False)
 ax.spines["right"].set_visible(False)
@@ -132,7 +129,7 @@ ax.spines["right"].set_visible(False)
 # ── (B) 4-class accuracy — supporting ──────────────────────────────────────
 ax = axes[1]
 ax.fill_betweenx([0, 105],  0,  6, color="#e74c3c", **PHASE_KW)
-ax.fill_betweenx([0, 105], 24, 48, color="#2980b9", **PHASE_KW)
+ax.fill_betweenx([0, 105], 40, 48, color="#2980b9", **PHASE_KW)
 ax.plot(common, [t_met[h]["acc4"] * 100 for h in common],
         "o-", color=C_TMP, lw=2.5, ms=5.5, zorder=3, label="Temporal")
 ax.plot(common, [s_met[h]["acc4"] * 100 for h in common],
@@ -150,7 +147,7 @@ ax.spines["right"].set_visible(False)
 # ── (C) Regression MAE — supporting ────────────────────────────────────────
 ax = axes[2]
 ax.fill_betweenx([0, 4],  0,  6, color="#e74c3c", **PHASE_KW)
-ax.fill_betweenx([0, 4], 24, 48, color="#2980b9", **PHASE_KW)
+ax.fill_betweenx([0, 4], 40, 48, color="#2980b9", **PHASE_KW)
 ax.plot(common, [t_met[h]["mae"] for h in common],
         "o-", color=C_TMP, lw=2.5, ms=5.5, zorder=3, label="Temporal")
 ax.plot(common, [s_met[h]["mae"] for h in common],
@@ -181,25 +178,38 @@ all_P  = np.array([s["pred_label"]  for s in t_s])
 early_s = [s for s in t_s if s["hours"] <  12]
 late_s  = [s for s in t_s if s["hours"] >= 24]
 
-fig, axes = plt.subplots(1, 3, figsize=(14, 4.8),
-                          gridspec_kw={"wspace": 0.38})
+import matplotlib.gridspec as mgridspec
+
+# Use GridSpec: 3 matrix cols + 1 narrow colorbar col, square matrix cells
+fig = plt.figure(figsize=(13, 5.5))
+gs = mgridspec.GridSpec(1, 4, width_ratios=[1, 1, 1, 0.055],
+                        wspace=0.30, figure=fig)
+ax0 = fig.add_subplot(gs[0, 0])
+ax1 = fig.add_subplot(gs[0, 1])
+ax2 = fig.add_subplot(gs[0, 2])
+cax = fig.add_subplot(gs[0, 3])
+axes_cm = [ax0, ax1, ax2]
 
 panels = [
-    (axes[0], all_L, all_P,        "(A)  Overall"),
-    (axes[1],
+    (ax0, all_L, all_P,
+     "(A)  Overall"),
+    (ax1,
      np.array([s["true_label"] for s in early_s]),
      np.array([s["pred_label"]  for s in early_s]),
-     "(B)  Early phase  (0–12 h)"),
-    (axes[2],
+     "(B)  0–12 h"),
+    (ax2,
      np.array([s["true_label"] for s in late_s]),
      np.array([s["pred_label"]  for s in late_s]),
-     "(C)  Late phase  (24–48 h)"),
+     "(C)  24–48 h"),
 ]
 
+last_im = None
 for ax, L, P, title in panels:
     cm = confusion_matrix(L, P)
     cm_pct = cm / cm.sum(axis=1, keepdims=True) * 100
-    im = ax.imshow(cm_pct, cmap="Blues", vmin=0, vmax=100, aspect="auto")
+    # aspect="equal" (default) gives square cells
+    im = ax.imshow(cm_pct, cmap="Blues", vmin=0, vmax=100)
+    last_im = im
 
     ax.set_xticks(range(4))
     ax.set_xticklabels(CLASS_NAMES, rotation=30, ha="right", fontsize=10)
@@ -216,11 +226,9 @@ for ax, L, P, title in panels:
                     color="white" if v > 55 else "black",
                     fontsize=9.5, fontweight="bold")
 
-    cb = plt.colorbar(im, ax=ax, shrink=0.78, pad=0.03)
-    cb.set_label("Row %", fontsize=9)
-    cb.ax.tick_params(labelsize=8)
-
-fig.tight_layout()
+cb = fig.colorbar(last_im, cax=cax)
+cb.set_label("Row %", fontsize=9)
+cb.ax.tick_params(labelsize=8)
 for ext in ("pdf", "png"):
     fig.savefig(OUT_DIR / f"fig2_confusion_matrices.{ext}", bbox_inches="tight", dpi=200)
 plt.close()
