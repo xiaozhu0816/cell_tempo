@@ -132,10 +132,10 @@ The baseline single-frame binary classifier achieved 89.2\% binary accuracy.
 Adding temporal encoding alone improved binary detection to 92.1\%, establishing temporal encoding as the primary driver of classification improvement.
 Adding multi-task regression to the single-frame model yielded 90.7\% binary accuracy (+1.5 pp), showing that the auxiliary time-regression signal provides complementary supervisory information even without temporal encoding.
 The dedicated temporal binary multi-task model achieved 93.2\% binary detection accuracy with time-regression capability (MAE $= 1.33$h, R$^2 = 0.982$), while the unified temporal four-class multi-task model achieved 93.5\% derived binary accuracy together with 70.6\% four-class accuracy and MAE $= 1.34$h.
-Bootstrap 95\% confidence intervals (1,000 iterations, well-level resampling; see STAR Methods) yield 93.5\% [88.4, 97.4] for the temporal model and 91.0\% [85.1, 96.6] for the single-frame baseline; McNemar's test confirms the temporal improvement is statistically significant ($\chi^2(1) = 322.8$, $p < 0.001$).
+Bootstrap 95\% confidence intervals (1,000 iterations, well-level resampling; see STAR Methods) yield 93.5\% [88.4, 97.4] for the temporal model and 91.0\% [85.1, 96.6] for the single-frame baseline (Table~1).
 
 The benefit of multi-task learning is most evident in the more challenging four-class severity task: temporal multi-task achieves 70.6\% four-class accuracy compared to 65.9\% for temporal classification-only (+4.7 pp), and 63.1\% vs.\ 54.7\% (+8.4 pp) for single-frame models (Table~1).
-The unified four-class multi-task model also achieves 93.5\% derived binary accuracy, suggesting that learning fine-grained severity features acts as an implicit regularizer for coarser binary discrimination.
+Empirically, the unified four-class multi-task model achieves 93.5\% derived binary accuracy, slightly higher than the dedicated binary multi-task model (93.2\%), suggesting that learning finer-grained severity features may provide complementary signal for binary discrimination.
 For time regression within the unified four-class setting, temporal encoding improves MAE from 1.67h to 1.34h and R$^2$ from 0.971 to 0.981, confirming that temporal context benefits both binary robustness and secondary outputs.
 
 \subsection*{Temporal encoding provides critical robustness at late time points}
@@ -150,7 +150,7 @@ At 43.5 hours, the temporal model achieves 100\% binary accuracy compared to 80.
 This late-stage collapse of the single-frame model is attributable to high-confluency morphological ambiguity: extensively damaged infected monolayers share visual features with dense mock cultures when viewed in isolation.
 The temporal model resolves this ambiguity by encoding the \emph{trajectory} of morphological change---a progressively deteriorating monolayer produces distinct color patterns in the pseudo-RGB representation compared to a stably confluent culture.
 
-Complementing the late-stage robustness result, per-condition AUROC analysis (Figure~S4) confirms that the unified temporal model achieves AUROC\,$>$\,0.99 across all infection conditions from mid-phase onward and sustains this through the full 46.5-hour imaging period.
+Complementing the late-stage robustness result, per-condition AUROC analysis (Figure~S6) confirms that the unified temporal model achieves AUROC\,$>$\,0.99 across all infection conditions from mid-phase onward and sustains this through the full 46.5-hour imaging period.
 Reliable detection is established early in the experiment for each condition, demonstrating that the model provides consistent performance throughout the entire infection timeline---not only during the mid-phase window where CPE is most visually apparent.
 This combination of early detection and late-stage robustness is essential for practical applications such as antiviral screening, where reliable readouts are required across the full duration of an experiment.
 
@@ -285,6 +285,9 @@ During the preparation of this work, the author(s) used Claude (Anthropic) in or
   \item Figure S3. Late-stage collapse analysis: per-timepoint accuracy for single-frame vs.\ temporal models
   \item Figure S4. Confidence trajectories across the 48-hour infection timeline
   \item Figure S5. Per-phase confusion matrices for each infection condition
+  \item Figure S6. Per-condition AUROC over time for the unified temporal model, showing sustained detection reliability throughout the 48-hour imaging period
+  \item Figure S7. Per-well binary classification accuracy heatmap for the unified temporal four-class multi-task model across three biological replicates and four infection conditions
+  \item Figure S8. Grad-CAM attention maps for representative test samples from Run~3, comparing the model's focus regions between infected (MOI~5) and mock conditions at mid- and late-phase time points
 \end{description}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -368,6 +371,28 @@ The temporal model achieves tighter clustering around the diagonal, particularly
 The dashed line indicates perfect prediction ($y = x$).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section*{SUPPLEMENTARY FIGURE LEGENDS}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\subsection*{Figure S7. Per-well classification accuracy across biological replicates and infection conditions}
+
+Heatmap of binary classification accuracy (derived from four-class predictions) for the unified temporal four-class multi-task model, evaluated on the 12 held-out test wells organized by biological replicate (rows: Run~1, Run~2, Run~3) and infection condition (columns: MOI~5, MOI~1, MOI~0.1, Mock).
+Color scale ranges from red (low accuracy) to green (high accuracy).
+Annotated values indicate per-well accuracy.
+Mock wells achieve consistently high accuracy across all three replicates (0.92--0.98), while accuracy for infected conditions varies more across replicates, particularly for intermediate MOI levels (MOI~1 and MOI~0.1) where CPE phenotypes are subtler and more heterogeneous.
+
+\bigskip
+
+\subsection*{Figure S8. Grad-CAM attention maps for representative test samples}
+
+Gradient-weighted class activation mapping (Grad-CAM) for four representative test samples from Run~3, organized in a 4$\times$2 grid (rows: MOI~5 mid-phase $t=20$h, MOI~5 late-phase $t=40$h, Mock mid-phase $t=20$h, Mock late-phase $t=40$h; columns: temporal pseudo-RGB input, Grad-CAM attention overlay).
+Grad-CAM activations were computed with respect to the predicted class using the final convolutional layer (ResNet50 \texttt{layer4}).
+Left column: enhanced temporal pseudo-RGB composite (R\,=\,$t{-}6$h, G\,=\,$t{-}3$h, B\,=\,$t$; per-channel percentile stretch with $\gamma=0.7$ for display clarity).
+Right column: Jet-colormap activation overlay ($\alpha=0.45$) indicating regions receiving the highest model attention.
+All four samples were correctly classified (check marks in axis labels).
+The attention patterns highlight cell-dense regions with active morphological change, consistent with the temporal color gradients in the pseudo-RGB input.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section*{MAIN TABLES, INCLUDING TITLES AND LEGENDS}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -409,7 +434,6 @@ Bold values indicate best performance per column. $\uparrow$: higher is better; 
 \medskip\noindent\textsuperscript{b}Bootstrap 95\% CIs (1,000 iterations, well-level resampling).
 Temporal 4cls multi-task: binary 93.5\% [88.4, 97.4], 4cls 70.6\% [55.5, 83.8], MAE 1.34 [1.17, 1.53]\,h, R$^2$ 0.981 [0.975, 0.987].
 SF 4cls multi-task: binary 91.0\% [85.1, 96.6], 4cls 63.1\% [47.5, 77.0], MAE 1.67 [1.41, 2.03]\,h, R$^2$ 0.971 [0.958, 0.980].
-McNemar's test (temporal vs.\ single-frame binary, derived): $\chi^2(1) = 322.8$, $p < 0.001$.
 
 \newpage
 
@@ -540,7 +564,6 @@ To quantify uncertainty in reported metrics, bootstrap 95\% confidence intervals
 Specifically, the 12 held-out test wells were resampled with replacement 1,000 times; for each resample, all frame-level predictions from the selected wells were aggregated and the metric of interest was recomputed.
 The 2.5th and 97.5th percentiles of the resulting bootstrap distribution define the 95\% CI.
 Well-level resampling was chosen because individual wells represent independent biological units; frame-level resampling would underestimate uncertainty by treating temporally correlated frames as independent observations.
-For the primary binary detection comparison, McNemar's test with continuity correction was applied to paired per-frame binary predictions from the temporal and single-frame four-class multi-task models.
 All experiments were run with a single random seed; variability across biological replicates is therefore represented by the held-out well/run design rather than repeated training runs.
 Software: Python 3.10, PyTorch 2.0, torchvision (ResNet50 with ImageNet weights).
 t-SNE visualizations\cite{ref-vandermaaten2008tsne} used scikit-learn with perplexity~30 and 1,000 iterations on 2,048-dimensional backbone features.
