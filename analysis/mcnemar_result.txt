@@ -1,0 +1,8 @@
+McNemar's test (temporal 4cls MT vs SF 4cls MT, binary derived)
+  b (SF correct, temporal wrong): 992
+  c (temporal correct, SF wrong): 1971
+  Total discordant pairs: 2963
+  Chi-squared statistic (continuity corrected): 322.8093
+  p-value: 0.00e+00
+  Temporal accuracy: 0.9339
+  SF accuracy: 0.9103
