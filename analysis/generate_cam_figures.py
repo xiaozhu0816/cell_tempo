@@ -316,42 +316,43 @@ def main():
     col_headers = ["MOI 5 — Input", "MOI 5 — Grad-CAM",
                    "Mock — Input",  "Mock — Grad-CAM"]
 
-    fig, axes = plt.subplots(
-        2, 4,
-        figsize=(11, 5.8),
-        gridspec_kw={"wspace": 0.04, "hspace": 0.12},
+    import matplotlib.gridspec as mgridspec
+
+    fig = plt.figure(figsize=(11.5, 5.6))
+    # 5 columns: 4 equal image panels + 1 narrow colorbar column
+    gs = mgridspec.GridSpec(
+        2, 5,
+        width_ratios=[1, 1, 1, 1, 0.055],
+        wspace=0.04, hspace=0.10,
+        figure=fig,
     )
+    axes = np.array([[fig.add_subplot(gs[r, c]) for c in range(4)] for r in range(2)])
+    cax  = fig.add_subplot(gs[:, 4])
 
     for row_i in range(2):
         moi_r, mock_r = grid[row_i]
 
-        # Col 0: MOI5 input
         axes[row_i, 0].imshow(moi_r["rgb"])
-        # Col 1: MOI5 CAM
         axes[row_i, 1].imshow(moi_r["overlay"])
-        # Col 2: Mock input
         axes[row_i, 2].imshow(mock_r["rgb"])
-        # Col 3: Mock CAM
         axes[row_i, 3].imshow(mock_r["overlay"])
 
         for ax in axes[row_i]:
             ax.axis("off")
 
-        # Row label on the left
+        # Row label to the left of col 0
         axes[row_i, 0].set_ylabel(row_labels[row_i], fontsize=10,
                                    rotation=0, ha="right", va="center",
-                                   labelpad=60)
+                                   labelpad=58)
 
     # Column headers on top row only
     for j, title in enumerate(col_headers):
         axes[0, j].set_title(title, fontsize=10, fontweight="bold", pad=5)
 
-    # Single compact colorbar attached to the two CAM columns
+    # Colorbar in its own column — does not steal space from image panels
     sm = plt.cm.ScalarMappable(cmap="jet", norm=plt.Normalize(0, 1))
     sm.set_array([])
-    # Attach to rightmost axes (col 1 and col 3 = CAM columns)
-    cbar = fig.colorbar(sm, ax=axes[:, [1, 3]], fraction=0.018, pad=0.02,
-                        shrink=0.85)
+    cbar = fig.colorbar(sm, cax=cax)
     cbar.set_label("Grad-CAM activation", fontsize=9)
     cbar.set_ticks([0, 0.5, 1])
     cbar.set_ticklabels(["Low", "Mid", "High"])
