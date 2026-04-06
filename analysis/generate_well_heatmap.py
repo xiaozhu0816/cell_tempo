@@ -1,6 +1,7 @@
 """
-Generate per-well accuracy heatmap for the unified temporal 4-class multi-task model.
+Generate per-well BINARY accuracy heatmap for the unified temporal 4-class multi-task model.
 
+Binary accuracy is derived from 4-class predictions: classes 0-2 → Infected, class 3 → Mock.
 Wells are organized as a 3×4 grid (biological runs × conditions).
 Labels use paper conventions: Run 1, Run 2, Run 3.
 
@@ -14,13 +15,14 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
 from pathlib import Path
+from collections import defaultdict
 
 # ---------------------------------------------------------------------------
 # Paths
 # ---------------------------------------------------------------------------
-METRICS_PATH = Path(
+PRED_PATH = Path(
     "/isilon/datalake/gurcan_rsch/scratch/WSI/zhengjie/CODE/cell_multiTask/outputs"
-    "/rowsplit_4cls_temporal_v2/20260327-155528/test_internal/epoch_030/per_well_metrics.json"
+    "/rowsplit_4cls_temporal_v2/20260327-155528/test_internal/epoch_030/per_sample_results.json"
 )
 OUT_DIR = Path("/isilon/datalake/gurcan_rsch/scratch/WSI/zhengjie/CODE/cell_tempo/paper/supplementary")
 
@@ -47,20 +49,38 @@ RUNS       = ["Run 1", "Run 2", "Run 3"]
 CONDITIONS = ["MOI 5", "MOI 1", "MOI 0.1", "Mock"]
 
 # ---------------------------------------------------------------------------
-# Load and organise
+# Compute binary per-well accuracy from per_sample_results.json
 # ---------------------------------------------------------------------------
-with open(METRICS_PATH) as f:
-    data = json.load(f)["per_well"]
+with open(PRED_PATH) as f:
+    samples = json.load(f)
+
+# Group samples by well
+well_samples = defaultdict(list)
+for s in samples:
+    well_samples[s["well"]].append(s)
+
+# Compute binary accuracy per well
+# Binary: classes 0,1,2 (MOI5/MOI1/MOI0.1) → Infected=0; class 3 (Mock) → Mock=1
+def derive_binary(label):
+    return 0 if label < 3 else 1
+
+binary_acc = {}
+for well_id, wsamples in well_samples.items():
+    correct = sum(
+        1 for s in wsamples
+        if derive_binary(s["pred_label"]) == derive_binary(s["true_label"])
+    )
+    binary_acc[well_id] = correct / len(wsamples)
 
 # Build 3×4 accuracy grid
 acc_grid = np.full((len(RUNS), len(CONDITIONS)), np.nan)
 for well_id, (run, cond) in WELL_MAP.items():
-    if well_id in data:
+    if well_id in binary_acc:
         r = RUNS.index(run)
         c = CONDITIONS.index(cond)
-        acc_grid[r, c] = data[well_id]["accuracy"]
+        acc_grid[r, c] = binary_acc[well_id]
 
-print("Accuracy grid (Run × Condition):")
+print("Binary accuracy grid (Run × Condition):")
 for i, run in enumerate(RUNS):
     for j, cond in enumerate(CONDITIONS):
         print(f"  {run} / {cond}: {acc_grid[i,j]:.3f}")
@@ -81,7 +101,6 @@ for r in range(len(RUNS)):
     for c in range(len(CONDITIONS)):
         val = acc_grid[r, c]
         if not np.isnan(val):
-            # Use dark text on light cells, light text on dark cells
             text_color = "black" if 0.35 < val < 0.85 else "white"
             ax.text(c, r, f"{val:.2f}", ha="center", va="center",
                     fontsize=11, fontweight="bold", color=text_color)
@@ -96,7 +115,7 @@ ax.set_ylabel("Biological replicate", fontsize=12, labelpad=8)
 
 # Colorbar
 cbar = fig.colorbar(im, ax=ax, fraction=0.035, pad=0.03)
-cbar.set_label("Per-well 4-class accuracy", fontsize=10)
+cbar.set_label("Per-well binary accuracy", fontsize=10)
 cbar.ax.tick_params(labelsize=9)
 
 # Grid lines between cells
@@ -106,8 +125,9 @@ ax.grid(which="minor", color="white", linewidth=1.5)
 ax.tick_params(which="minor", bottom=False, left=False)
 
 fig.suptitle(
-    "Per-well classification accuracy — temporal multi-task model",
-    fontsize=11, y=1.01
+    "Per-well binary classification accuracy — temporal multi-task model\n"
+    "(binary: Infected vs Mock, derived from 4-class predictions)",
+    fontsize=10, y=1.03
 )
 fig.tight_layout()
 

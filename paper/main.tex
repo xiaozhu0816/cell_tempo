@@ -44,7 +44,7 @@
 \bibliographystyle{numbered}
 \usepackage[right]{lineno}\linenumbers
 
-\graphicspath{{figures/}}
+\graphicspath{{figures/}{supplementary/}}
 
 \makeatletter
 \renewcommand{\maketitle}{\bgroup\setlength{\parindent}{0pt}
@@ -285,9 +285,9 @@ During the preparation of this work, the author(s) used Claude (Anthropic) in or
   \item Figure S3. Late-stage collapse analysis: per-timepoint accuracy for single-frame vs.\ temporal models
   \item Figure S4. Confidence trajectories across the 48-hour infection timeline
   \item Figure S5. Per-phase confusion matrices for each infection condition
-  \item Figure S6. Per-condition AUROC over time for the unified temporal model, showing sustained detection reliability throughout the 48-hour imaging period
-  \item Figure S7. Per-well binary classification accuracy heatmap for the unified temporal four-class multi-task model across three biological replicates and four infection conditions
-  \item Figure S8. Grad-CAM attention maps for representative test samples from Run~3, comparing the model's focus regions between infected (MOI~5) and mock conditions at mid- and late-phase time points
+  \item Figure S6. Per-condition binary AUROC over time for the unified temporal model (temporal model only), showing early detection onset and sustained reliability throughout the 48-hour imaging period
+  \item Figure S7. Per-well binary classification accuracy heatmap for the unified temporal model across three biological replicates and four infection conditions
+  \item Figure S8. Grad-CAM attention maps for representative infected and mock test samples at mid- and late-phase time points (qualitative interpretability)
 \end{description}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -374,23 +374,47 @@ The dashed line indicates perfect prediction ($y = x$).
 \section*{SUPPLEMENTARY FIGURE LEGENDS}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\subsection*{Figure S7. Per-well classification accuracy across biological replicates and infection conditions}
+\newpage
 
-Heatmap of binary classification accuracy (derived from four-class predictions) for the unified temporal four-class multi-task model, evaluated on the 12 held-out test wells organized by biological replicate (rows: Run~1, Run~2, Run~3) and infection condition (columns: MOI~5, MOI~1, MOI~0.1, Mock).
-Color scale ranges from red (low accuracy) to green (high accuracy).
-Annotated values indicate per-well accuracy.
-Mock wells achieve consistently high accuracy across all three replicates (0.92--0.98), while accuracy for infected conditions varies more across replicates, particularly for intermediate MOI levels (MOI~1 and MOI~0.1) where CPE phenotypes are subtler and more heterogeneous.
+%%% Figure S6 — Per-condition AUROC over time (temporal model only)
+\noindent\includegraphics[width=\linewidth]{figS6_auroc_over_time.pdf}
 
-\bigskip
+\subsection*{Figure S6. Per-condition detection reliability throughout the 48-hour infection timeline}
+
+Binary AUROC (infected condition vs Mock) computed in 3-hour bins across the full imaging period for the unified temporal multi-task model.
+Three panels correspond to the three infected conditions (MOI~5, MOI~1, MOI~0.1), each evaluated against Mock controls.
+The dashed horizontal line marks AUROC\,=\,0.99; shaded regions indicate time bins exceeding this threshold.
+Vertical dotted lines indicate the earliest time bin at which AUROC\,$\geq$\,0.99 is first sustained across two consecutive bins.
+MOI~5 reaches reliable detection earliest owing to rapid, high-titer CPE progression, while MOI~0.1 requires more time as only a fraction of cells are initially infected.
+Once reliable detection is established, all three conditions maintain AUROC\,$\geq$\,0.99 through the full 46.5-hour imaging period.
+
+\newpage
+
+%%% Figure S7 — Per-well binary accuracy heatmap
+\noindent\includegraphics[width=\linewidth]{figS7_well_heatmap.pdf}
+
+\subsection*{Figure S7. Per-well binary classification accuracy across biological replicates and infection conditions}
+
+Heatmap of per-well binary accuracy (Infected vs Mock, derived from four-class predictions by collapsing MOI classes) for the unified temporal multi-task model, evaluated on the 12 held-out test wells.
+Wells are organized by biological replicate (rows: Run~1, Run~2, Run~3) and infection condition (columns: MOI~5, MOI~1, MOI~0.1, Mock).
+Color scale ranges from red (low) through white to green (high accuracy); annotated values indicate per-well accuracy.
+Binary accuracy is high across most wells ($\geq$0.91 for 10 of 12 wells), with the lowest values in the MOI~0.1 column (0.71--0.99), consistent with subtler CPE phenotypes at low viral dose.
+Mock wells achieve consistently high accuracy (0.92--0.98) across all three replicates.
+
+\newpage
+
+%%% Figure S8 — Grad-CAM attention maps
+\noindent\includegraphics[width=\linewidth]{figS8_cam_attention.pdf}
 
 \subsection*{Figure S8. Grad-CAM attention maps for representative test samples}
 
-Gradient-weighted class activation mapping (Grad-CAM) for four representative test samples from Run~3, organized in a 4$\times$2 grid (rows: MOI~5 mid-phase $t=20$h, MOI~5 late-phase $t=40$h, Mock mid-phase $t=20$h, Mock late-phase $t=40$h; columns: temporal pseudo-RGB input, Grad-CAM attention overlay).
-Grad-CAM activations were computed with respect to the predicted class using the final convolutional layer (ResNet50 \texttt{layer4}).
+Gradient-weighted class activation mapping (Grad-CAM) for four representative test samples from Run~3.
+Each row shows one sample (MOI~5 mid-phase $t=20$h; MOI~5 late-phase $t=40$h; Mock mid-phase $t=20$h; Mock late-phase $t=40$h).
 Left column: enhanced temporal pseudo-RGB composite (R\,=\,$t{-}6$h, G\,=\,$t{-}3$h, B\,=\,$t$; per-channel percentile stretch with $\gamma=0.7$ for display clarity).
-Right column: Jet-colormap activation overlay ($\alpha=0.45$) indicating regions receiving the highest model attention.
-All four samples were correctly classified (check marks in axis labels).
-The attention patterns highlight cell-dense regions with active morphological change, consistent with the temporal color gradients in the pseudo-RGB input.
+Right column: Jet-colormap Grad-CAM activation overlay, computed with respect to the true class using the final convolutional layer (ResNet50 \texttt{layer4}).
+All four samples were correctly classified (indicated by check marks).
+The activation maps show that the model attends to cell body regions; infected samples at late phase ($t=40$h) tend to show more spatially distributed activations, consistent with progressing monolayer disruption visible in the pseudo-RGB channels.
+These patterns are provided as qualitative interpretability context; formal biological claims would require additional experimental validation.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section*{MAIN TABLES, INCLUDING TITLES AND LEGENDS}
