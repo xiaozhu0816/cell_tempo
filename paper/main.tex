@@ -286,6 +286,7 @@ During the preparation of this work, the author(s) used Claude (Anthropic) in or
   \item Figure S4. Per-well binary classification accuracy heatmap for the unified temporal model across three biological replicates and four infection conditions
   \item Figure S5. Grad-CAM attention maps for representative infected and mock test samples at two time points ($t=20$h and $t=40$h) (qualitative interpretability)
   \item Figure S6. Dataset hierarchy and temporal sample construction, illustrating run-to-well-to-position sampling and pseudo-RGB input assembly
+  \item Figure S7. End-to-end study overview, summarizing time-lapse brightfield acquisition, temporal pseudo-RGB encoding, multi-task learning, and model outputs
 \end{description}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -440,7 +441,7 @@ These patterns are provided as qualitative context for model interpretability an
 \newpage
 
 %%% Figure S6 — Dataset hierarchy schematic
-\noindent\includegraphics[width=\linewidth]{figS6_dataset_schematic.pdf}
+\noindent\includegraphics[width=\linewidth]{figS6_dataset_hierarchy.pdf}
 
 \subsection*{Figure S6. Dataset hierarchy and temporal sample construction}
 
@@ -448,6 +449,18 @@ Schematic overview of the acquisition hierarchy used in this study.
 Each biological run corresponds to one 12-well plate containing four conditions (MOI~5, MOI~1, MOI~0.1, and Mock) with three technical replicate wells per condition.
 Each well is sampled on a 6$\times$6 grid of acquisition positions, and each position contributes a 96-frame brightfield time series collected every 30 minutes over 48 hours.
 Temporal pseudo-RGB samples are constructed by selecting three frames at offsets $t{-}6$h, $t{-}3$h, and $t$ from each position-specific time series and stacking them as the red, green, and blue channels for the CNN input.
+
+\newpage
+
+%%% Figure S7 — Method overview schematic
+\noindent\includegraphics[width=\linewidth]{figS7_method_overview.pdf}
+
+\subsection*{Figure S7. End-to-end overview of temporal brightfield modeling}
+
+Study-level schematic summarizing the end-to-end workflow used in this manuscript.
+HBMVEC cultures infected with VEEV TC-83 at multiple MOI levels are imaged by brightfield microscopy every 30 minutes over 48 hours.
+Three time-offset frames ($t{-}6$h, $t{-}3$h, and $t$) are stacked as temporal pseudo-RGB channels and processed by a unified multi-task network.
+The primary output is robust binary infected-versus-mock detection, with four-class severity classification and time-post-infection regression provided as secondary outputs.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section*{MAIN TABLES, INCLUDING TITLES AND LEGENDS}
@@ -533,21 +546,21 @@ It will enumerate the HBMVEC cell source, VEEV TC-83 reagent source, CELLCYTE X 
 
 \subsubsection*{Cell lines}
 
-Human brain microvascular endothelial cells (HBMVEC) were obtained commercially and cultured in endothelial growth medium supplemented with vendor-recommended growth factors at 37$^{\circ}$C and 5\% CO$_2$.
+Primary human brain microvascular endothelial cells (HBMVEC; Cell Systems, ACBRI 376) were obtained commercially and cultured in EGM-2 Endothelial Cell Growth Medium-2 BulletKit (Lonza, Cat\# CC-3162) at 37$^{\circ}$C and 5\% CO$_2$.
 Cells were used at passage~5 for the imaging experiments analyzed in this study.
-Sex and gender were not relevant to this study, as HBMVEC are an immortalized endothelial cell line used as an in vitro BBB model; results are not expected to differ based on the sex of the cell donor.
+According to the vendor certificate of analysis, the donor was male and pediatric. No sex-based comparisons were performed in this study, which used a single commercially obtained primary HBMVEC preparation as an in vitro BBB model.
 
 \subsubsection*{Virus strains}
 
 The attenuated Venezuelan equine encephalitis virus (VEEV) vaccine strain TC-83 was used for all infection experiments.
-Virus inoculum was prepared from laboratory stock maintained under approved institutional biosafety procedures.
+Virus inoculum was prepared from laboratory stock originally provided by I.~Frolov and maintained under approved institutional biosafety procedures.
 All work involving VEEV TC-83 was conducted under BSL-2 containment with institutional biosafety approval.
 
 \subsection*{Method details}
 
 \subsubsection*{Viral infection protocol}
 
-Cells were seeded at a density of 45,000 cells per well in 12-well plates to obtain a confluent monolayer suitable for morphological assessment.
+Cells were seeded at a density of 45,000 cells per well in 12-well tissue-culture plates (CELLSTAR, Greiner Bio-One, Cat\# 665180) to obtain a confluent monolayer suitable for morphological assessment.
 VEEV TC-83 was used for infection at three multiplicities of infection: MOI~5, MOI~1, and MOI~0.1. These MOI levels were selected to span a range of CPE kinetics from rapid synchronous infection (MOI~5) to delayed heterogeneous responses (MOI~0.1).
 A mock-infected control condition was treated with PBS in parallel.
 After viral adsorption, cells were washed with phosphate-buffered saline (PBS) and fresh medium was added (defined as experiment start, $t=0$).
