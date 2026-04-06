@@ -323,7 +323,7 @@ Mock cells maintain a flattened, cobblestone-like endothelial morphology through
 MOI~5 wells show pronounced cell rounding and detachment by 12--16 hours.
 MOI~1 wells exhibit similar changes beginning around 18--24 hours.
 MOI~0.1 wells show subtle, heterogeneous changes emerging at 24--36 hours.
-Images acquired with CELLCYTE X at 10$\times$ magnification in Enhanced Contour mode (0.862~$\mu$m/pixel). Data shown from Run~2.
+Images acquired with CELLCYTE X at 10$\times$ magnification in Enhanced Contour mode (0.862~$\mu$m/pixel). Data shown from Run~1.
 
 \newpage
 
@@ -464,7 +464,7 @@ After viral adsorption, cells were washed with phosphate-buffered saline (PBS) a
 
 \subsubsection*{Experimental design and biological replicates}
 
-Three independent biological replicates (designated Run~2, Run~3, and Run~4) were performed on separate days.
+Three independent biological replicates were performed on separate days and are referred to here as Run~1, Run~2, and Run~3 for presentation clarity.
 Each biological replicate used a separate 12-well plate with four conditions (MOI~5, MOI~1, MOI~0.1, and Mock) and three technical replicate wells per condition (rows A, B, and C).
 Each well was imaged at 36 acquisition positions in a 6$\times$6 grid pattern over 93 time points collected every 30 minutes.
 This design yields a hierarchical dataset of runs, wells, positions, and frames comprising 120,528 frame-level samples in total.
@@ -502,7 +502,7 @@ Data augmentation (random horizontal/vertical flips and 90$^{\circ}$/180$^{\circ
 
 To assess cross-well generalization, we adopted a row-split validation protocol: rows A and B (2 of 3 technical replicate wells per condition within each biological run) were used for training, and row C was reserved for testing.
 This ensures that training and test data come from physically separate wells.
-To address condition-specific confounds, a well-swap protocol (v2 split) was applied: in Run~3, the MOI~1 well from row~C was exchanged with row~A; in Run~4, the MOI~5 well from row~C was exchanged with row~A.
+To address condition-specific confounds, a well-swap protocol (v2 split) was applied: in Run~2, the MOI~1 well from row~C was exchanged with row~A; in Run~3, the MOI~5 well from row~C was exchanged with row~A.
 These swaps preserve train/test MOI balance while mitigating anomalous well-specific effects (unusually low cell density in specific wells) identified during quality-control review before final model training.
 The held-out test partition therefore consists of 12 wells across the three biological runs and contains 40,176 frame-level samples.
 
