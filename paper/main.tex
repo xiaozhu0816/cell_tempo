@@ -150,7 +150,7 @@ At 43.5 hours, the temporal model achieves 100\% binary accuracy compared to 80.
 This late-stage collapse of the single-frame model is attributable to high-confluency morphological ambiguity: extensively damaged infected monolayers share visual features with dense mock cultures when viewed in isolation.
 The temporal model resolves this ambiguity by encoding the \emph{trajectory} of morphological change---a progressively deteriorating monolayer produces distinct color patterns in the pseudo-RGB representation compared to a stably confluent culture.
 
-Complementing the late-stage robustness result, per-condition AUROC analysis (Figure~S6) confirms that the unified temporal model achieves AUROC\,$>$\,0.99 across all infection conditions from approximately 20 hours onward and sustains this through the full 46.5-hour imaging period.
+Complementing the late-stage robustness result, per-condition AUROC analysis (Figure~S3) confirms that the unified temporal model achieves AUROC\,$>$\,0.99 across all infection conditions from approximately 20 hours onward and sustains this through the full 46.5-hour imaging period.
 Reliable detection is established within the first 20 hours for each condition, demonstrating that the model provides consistent performance throughout the entire infection timeline.
 This combination of early detection and late-stage robustness is essential for practical applications such as antiviral screening, where reliable readouts are required across the full duration of an experiment.
 
@@ -280,11 +280,11 @@ During the preparation of this work, the author(s) used Claude (Anthropic) in or
 
 \begin{description}
   \item Table S1. Per-class per-time-bin classification metrics (precision, recall, F1) in 3-hour bins
-  \item Figure S4. Predicted infection probability over time for temporal and single-frame models, by condition
-  \item Figure S5. Per-time-window four-class confusion matrices for temporal and single-frame models (0--12h, 12--24h, 24--48h)
-  \item Figure S6. Per-condition binary AUROC over time for the unified temporal model, showing early detection onset and sustained reliability throughout the 48-hour imaging period
-  \item Figure S7. Per-well binary classification accuracy heatmap for the unified temporal model across three biological replicates and four infection conditions
-  \item Figure S8. Grad-CAM attention maps for representative infected and mock test samples at two time points ($t=20$h and $t=40$h) (qualitative interpretability)
+  \item Figure S1. Predicted infection probability over time for temporal and single-frame models, by condition
+  \item Figure S2. Per-time-window four-class confusion matrices for temporal and single-frame models (0--12h, 12--24h, 24--48h)
+  \item Figure S3. Per-condition binary AUROC over time for the unified temporal model, showing early detection onset and sustained reliability throughout the 48-hour imaging period
+  \item Figure S4. Per-well binary classification accuracy heatmap for the unified temporal model across three biological replicates and four infection conditions
+  \item Figure S5. Grad-CAM attention maps for representative infected and mock test samples at two time points ($t=20$h and $t=40$h) (qualitative interpretability)
 \end{description}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -371,10 +371,10 @@ The dashed line indicates perfect prediction ($y = x$).
 
 \newpage
 
-%%% Figure S4 — Confidence trajectories
+%%% Figure S1 — Confidence trajectories
 \noindent\includegraphics[width=\linewidth]{figS4_confidence_trajectories.pdf}
 
-\subsection*{Figure S4. Predicted infection probability over time by condition}
+\subsection*{Figure S1. Predicted infection probability over time by condition}
 
 Mean predicted P(Infected)\,=\,$1 - P(\text{Mock})$ across the 48-hour imaging period, shown separately for the temporal model (left) and single-frame model (right).
 Each line represents one of the four experimental conditions (MOI~5, MOI~1, MOI~0.1, Mock); shaded bands show $\pm$1 SEM.
@@ -384,10 +384,10 @@ In the single-frame model, this separation is less stable: infected-condition pr
 
 \newpage
 
-%%% Figure S5 — Per-time-window confusion matrices
+%%% Figure S2 — Per-time-window confusion matrices
 \noindent\includegraphics[width=\linewidth]{figS5_confusion_per_phase.pdf}
 
-\subsection*{Figure S5. Four-class confusion matrices by time window}
+\subsection*{Figure S2. Four-class confusion matrices by time window}
 
 Row-normalized confusion matrices for the temporal model (top row) and single-frame model (bottom row), computed in three non-overlapping time windows: 0--12h, 12--24h, and 24--48h.
 Values indicate the fraction of true-class samples predicted as each class (row percentages).
@@ -396,10 +396,10 @@ In the 24--48h window, the temporal model maintains robust discrimination across
 
 \newpage
 
-%%% Figure S6 — Per-condition AUROC over time (temporal model only)
+%%% Figure S3 — Per-condition AUROC over time (temporal model only)
 \noindent\includegraphics[width=\linewidth]{figS6_auroc_over_time.pdf}
 
-\subsection*{Figure S6. Per-condition detection reliability throughout the 48-hour infection timeline}
+\subsection*{Figure S3. Per-condition detection reliability throughout the 48-hour infection timeline}
 
 Binary AUROC (infected condition vs Mock) computed in 3-hour bins across the full imaging period for the unified temporal multi-task model.
 Three panels correspond to the three infected conditions (MOI~5, MOI~1, MOI~0.1), each evaluated against Mock controls.
@@ -410,10 +410,10 @@ Once reliable detection is established, all three conditions maintain AUROC\,$\g
 
 \newpage
 
-%%% Figure S7 — Per-well binary accuracy heatmap
+%%% Figure S4 — Per-well binary accuracy heatmap
 \noindent\includegraphics[width=\linewidth]{figS7_well_heatmap.pdf}
 
-\subsection*{Figure S7. Per-well binary classification accuracy across biological replicates and infection conditions}
+\subsection*{Figure S4. Per-well binary classification accuracy across biological replicates and infection conditions}
 
 Heatmap of per-well binary accuracy (Infected vs Mock, derived from four-class predictions by collapsing MOI classes) for the unified temporal multi-task model, evaluated on the 12 held-out test wells.
 Wells are organized by biological replicate (rows: Run~1, Run~2, Run~3) and infection condition (columns: MOI~5, MOI~1, MOI~0.1, Mock).
@@ -423,10 +423,10 @@ Mock wells achieve consistently high accuracy (0.92--0.98) across all three repl
 
 \newpage
 
-%%% Figure S8 — Grad-CAM attention maps
+%%% Figure S5 — Grad-CAM attention maps
 \noindent\includegraphics[width=\linewidth]{figS8_cam_attention.pdf}
 
-\subsection*{Figure S8. Grad-CAM attention maps for representative test samples}
+\subsection*{Figure S5. Grad-CAM attention maps for representative test samples}
 
 Gradient-weighted class activation mapping (Grad-CAM) for four representative test samples from Run~3, arranged in a $2\times4$ grid.
 Rows correspond to time points (top: $t=20$h; bottom: $t=40$h); within each row, columns show: MOI~5 pseudo-RGB input, MOI~5 Grad-CAM overlay, Mock pseudo-RGB input, Mock Grad-CAM overlay.

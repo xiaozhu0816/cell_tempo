@@ -155,7 +155,7 @@ windows = [
 fig = plt.figure(figsize=(13, 8.0))
 gs = mgridspec.GridSpec(2, 4,
                         width_ratios=[1, 1, 1, 0.055],
-                        wspace=0.28, hspace=0.40,
+                        wspace=0.28, hspace=0.42,
                         figure=fig)
 
 row_labels = ["Temporal model", "Single-frame model"]
@@ -181,19 +181,16 @@ for row_i, (samples, row_label) in enumerate([
         ax.set_xticklabels(CLASS_NAMES, rotation=30, ha="right", fontsize=9)
         ax.set_yticks(range(4))
         ax.set_yticklabels(CLASS_NAMES, fontsize=9)
-        ax.set_xlabel("Predicted", fontsize=9)
+        if row_i == 1:
+            ax.set_xlabel("Predicted", fontsize=9)
+        else:
+            ax.set_xlabel("")
         if col_i == 0:
-            ax.set_ylabel("True", fontsize=9)
+            ax.set_ylabel("True", fontsize=9, labelpad=10)
 
         # Column header on top row only
         if row_i == 0:
             ax.set_title(win_label, fontweight="bold", pad=8, fontsize=11)
-
-        # Row label on leftmost column only
-        if col_i == 0:
-            ax.text(-0.28, 0.5, row_label, transform=ax.transAxes,
-                    fontsize=10, fontweight="bold", rotation=90,
-                    va="center", ha="center")
 
         for i in range(4):
             for j in range(4):
@@ -202,14 +199,22 @@ for row_i, (samples, row_label) in enumerate([
                         color="white" if v > 55 else "black",
                         fontsize=8, fontweight="bold")
 
+for row_i, row_label in enumerate(row_labels):
+    row_axes = [fig.axes[row_i * 3 + j] for j in range(3)]
+    top_y = max(ax.get_position().y1 for ax in row_axes)
+    left_x = min(ax.get_position().x0 for ax in row_axes)
+    fig.text(left_x, top_y + 0.015, row_label,
+             fontsize=11, fontweight="bold", ha="left", va="bottom")
+
 cax = fig.add_subplot(gs[:, 3])
 cb  = fig.colorbar(last_im, cax=cax)
 cb.set_label("Row %", fontsize=9)
 cb.ax.tick_params(labelsize=8)
+fig.subplots_adjust(left=0.08, right=0.95, bottom=0.08, top=0.93)
 
 for ext in ("pdf", "png"):
     out = OUT / f"figS5_confusion_per_phase.{ext}"
-    fig.savefig(out, bbox_inches="tight", dpi=200)
+    fig.savefig(out, dpi=200)
     print(f"  Saved: {out}")
 plt.close()
 

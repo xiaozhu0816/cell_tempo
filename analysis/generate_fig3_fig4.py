@@ -181,7 +181,7 @@ late_s  = [s for s in t_s if s["hours"] >= 24]
 import matplotlib.gridspec as mgridspec
 
 # Use GridSpec: 3 matrix cols + 1 narrow colorbar col, square matrix cells
-fig = plt.figure(figsize=(13, 5.5))
+fig = plt.figure(figsize=(13, 5.6))
 gs = mgridspec.GridSpec(1, 4, width_ratios=[1, 1, 1, 0.055],
                         wspace=0.30, figure=fig)
 ax0 = fig.add_subplot(gs[0, 0])
@@ -215,8 +215,14 @@ for ax, L, P, title in panels:
     ax.set_xticklabels(CLASS_NAMES, rotation=30, ha="right", fontsize=10)
     ax.set_yticks(range(4))
     ax.set_yticklabels(CLASS_NAMES, fontsize=10)
-    ax.set_xlabel("Predicted", fontsize=11)
-    ax.set_ylabel("True", fontsize=11)
+    if ax is ax1:
+        ax.set_xlabel("Predicted", fontsize=11, labelpad=10)
+    else:
+        ax.set_xlabel("")
+    if ax is ax0:
+        ax.set_ylabel("True", fontsize=11, labelpad=8)
+    else:
+        ax.set_ylabel("")
     ax.set_title(title, fontweight="bold", pad=10)
 
     for i in range(4):
@@ -229,8 +235,9 @@ for ax, L, P, title in panels:
 cb = fig.colorbar(last_im, cax=cax)
 cb.set_label("Row %", fontsize=9)
 cb.ax.tick_params(labelsize=8)
+fig.subplots_adjust(left=0.07, right=0.96, bottom=0.16, top=0.90)
 for ext in ("pdf", "png"):
-    fig.savefig(OUT_DIR / f"fig2_confusion_matrices.{ext}", bbox_inches="tight", dpi=200)
+    fig.savefig(OUT_DIR / f"fig2_confusion_matrices.{ext}", dpi=200)
 plt.close()
 print("  Saved Figure 4")
 
