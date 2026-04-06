@@ -285,6 +285,7 @@ During the preparation of this work, the author(s) used Claude (Anthropic) in or
   \item Figure S3. Per-condition binary AUROC over time for the unified temporal model, showing early detection onset and sustained reliability throughout the 48-hour imaging period
   \item Figure S4. Per-well binary classification accuracy heatmap for the unified temporal model across three biological replicates and four infection conditions
   \item Figure S5. Grad-CAM attention maps for representative infected and mock test samples at two time points ($t=20$h and $t=40$h) (qualitative interpretability)
+  \item Figure S6. Dataset hierarchy and temporal sample construction, illustrating run-to-well-to-position sampling and pseudo-RGB input assembly
 \end{description}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -436,6 +437,18 @@ All four samples were correctly classified.
 The activation maps indicate that the model responds to cell-containing regions throughout the field of view, with no systematic focus on image artifacts or corners.
 These patterns are provided as qualitative context for model interpretability and do not constitute evidence for specific biological mechanisms.
 
+\newpage
+
+%%% Figure S6 — Dataset hierarchy schematic
+\noindent\includegraphics[width=\linewidth]{figS6_dataset_schematic.pdf}
+
+\subsection*{Figure S6. Dataset hierarchy and temporal sample construction}
+
+Schematic overview of the acquisition hierarchy used in this study.
+Each biological run corresponds to one 12-well plate containing four conditions (MOI~5, MOI~1, MOI~0.1, and Mock) with three technical replicate wells per condition.
+Each well is sampled on a 6$\times$6 grid of acquisition positions, and each position contributes a 96-frame brightfield time series collected every 30 minutes over 48 hours.
+Temporal pseudo-RGB samples are constructed by selecting three frames at offsets $t{-}6$h, $t{-}3$h, and $t$ from each position-specific time series and stacking them as the red, green, and blue channels for the CNN input.
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section*{MAIN TABLES, INCLUDING TITLES AND LEGENDS}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -542,16 +555,17 @@ After viral adsorption, cells were washed with phosphate-buffered saline (PBS) a
 \subsubsection*{Experimental design and biological replicates}
 
 Three independent biological replicates were performed on separate days and are referred to here as Run~1, Run~2, and Run~3 for presentation clarity.
+At the dataset level, the acquisition hierarchy is run $\rightarrow$ well $\rightarrow$ position $\rightarrow$ timepoint $\rightarrow$ temporal pseudo-RGB sample (Figure~S6).
 Each biological replicate used a separate 12-well plate with four conditions (MOI~5, MOI~1, MOI~0.1, and Mock) and three technical replicate wells per condition (rows A, B, and C).
-Each well was imaged at 36 acquisition positions in a 6$\times$6 grid pattern over 93 time points collected every 30 minutes.
-This design yields a hierarchical dataset of runs, wells, positions, and frames comprising 120,528 frame-level samples in total.
+Each well was imaged at 36 acquisition positions in a 6$\times$6 grid pattern over 96 time points collected every 30 minutes over 48 hours.
+This design yields a hierarchical dataset comprising 3 biological runs, 12 wells per run, 36 acquisition positions per well, and 96 frames per position, for a total of 124,416 frame-level samples.
 
 \subsubsection*{High-frequency live-cell imaging}
 
 Imaging was performed using the CELLCYTE X (CYTENA GmbH, Freiburg, Germany) live-cell imaging system located inside a standard incubator.
 Images were acquired using a 10$\times$ objective in ``Enhanced Contour'' mode at a spatial resolution of 0.862~$\mu$m/pixel.
 Each field of view was 2448$\times$2048 pixels ($\sim$0.8$\times$0.7~mm).
-Images were acquired every 30 minutes over approximately 48 hours, producing per-position time series stored as multi-frame TIFF stacks.
+Images were acquired every 30 minutes over 48 hours, producing per-position time series stored as multi-frame TIFF stacks.
 
 \subsubsection*{Temporal pseudo-RGB encoding}
 
@@ -581,7 +595,7 @@ To assess cross-well generalization, we adopted a row-split validation protocol:
 This ensures that training and test data come from physically separate wells.
 To address condition-specific confounds, a well-swap protocol (v2 split) was applied: in Run~2, the MOI~1 well from row~C was exchanged with row~A; in Run~3, the MOI~5 well from row~C was exchanged with row~A.
 These swaps preserve train/test MOI balance while mitigating anomalous well-specific effects (unusually low cell density in specific wells) identified during quality-control review before final model training.
-The held-out test partition therefore consists of 12 wells across the three biological runs and contains 40,176 frame-level samples.
+The held-out test partition therefore consists of 12 wells across the three biological runs and contains 41,472 frame-level samples.
 
 \subsubsection*{Multi-task architecture and training}
 
@@ -600,7 +614,7 @@ Evaluation was performed every 5 epochs on the held-out test set for progress mo
 
 \subsection*{Quantification and statistical analysis}
 
-Classification performance was evaluated using accuracy, macro-averaged F1-score, precision, and recall, computed across the full test set ($n = 40{,}176$ frame-level samples from held-out wells).
+Classification performance was evaluated using accuracy, macro-averaged F1-score, precision, and recall, computed across the full test set ($n = 41{,}472$ frame-level samples from held-out wells).
 For the unified four-class model, binary metrics were derived by remapping four-class predictions (classes 0--2 $\to$ Infected, class 3 $\to$ Mock).
 Regression was evaluated using mean absolute error (MAE), root mean square error (RMSE), and coefficient of determination (R$^2$).
 All metrics were additionally computed in 3-hour time bins across the 0--48h timeline for temporal analysis.
