@@ -2,23 +2,30 @@
 """
 Fill the Cell Reports Key Resources Table (KRT) for the cell_tempo paper.
 Reads the empty template, populates Table 0 with our paper's entries,
-saves as a new docx (KRT_cell_tempo_filled.docx).
+deletes the Appendix A example tables, and saves as KRT_cell_tempo_filled.docx.
+
+Citation format: use [[N]] in strings to produce superscript reference numbers,
+matching the numbered bibliography style used in main.tex.
 """
 
-from docx import Document
+import re
 from copy import deepcopy
 from pathlib import Path
+
+from docx import Document
+from docx.oxml.ns import qn
 
 SRC = Path(__file__).parent / "Table_Template_Cell_Reports.docx"
 DST = Path(__file__).parent / "KRT_cell_tempo_filled.docx"
 
 # ── KRT entries grouped by subheading ─────────────────────────────────
 # Each entry is (REAGENT or RESOURCE, SOURCE, IDENTIFIER)
+# Use [[N]] for superscript citation numbers (Cell Press numbered style).
 KRT = {
     "Bacterial and virus strains": [
         ("Venezuelan equine encephalitis virus (VEEV), vaccine strain TC-83",
          "P1 laboratory stock generated from an infectious cDNA clone provided by I. Frolov",
-         "Kinney et al., J. Virol. 1993"),
+         "Kinney et al.[[19]]"),
     ],
     "Chemicals, peptides, and recombinant proteins": [
         ("Dulbecco's phosphate-buffered saline (DPBS)",
@@ -68,13 +75,13 @@ KRT = {
          "PyTorch",
          "https://pytorch.org/vision"),
         ("ResNet50 architecture",
-         "He et al.19",
+         "He et al.[[20]]",
          "https://pytorch.org/vision/stable/models/resnet.html"),
         ("scikit-learn",
-         "Pedregosa et al.",
+         "Pedregosa et al.[[22]]",
          "https://scikit-learn.org"),
         ("t-SNE (visualization)",
-         "van der Maaten and Hinton20",
+         "van der Maaten and Hinton[[21]]",
          "https://scikit-learn.org/stable/modules/generated/sklearn.manifold.TSNE.html"),
         ("cell_tempo analysis pipeline",
          "This paper",
@@ -106,6 +113,9 @@ SUBHEADINGS_IN_TEMPLATE = [
     "Other",
 ]
 
+# Regex to find [[N]] superscript markers
+_SUPER_RE = re.compile(r"\[\[(\d+)\]\]")
+
 
 def first_cell_text(row):
     return row.cells[0].text.strip()
@@ -125,42 +135,57 @@ def remove_row(table, row):
 def insert_row_after(table, ref_row):
     """Insert a new empty row immediately after ref_row, return the new row."""
     new_tr = deepcopy(ref_row._element)
-    # Clear cell text in the copied row
-    for tc in new_tr.iter('{http://schemas.openxmlformats.org/wordprocessingml/2006/main}tc'):
-        for p in tc.iter('{http://schemas.openxmlformats.org/wordprocessingml/2006/main}p'):
+    for tc in new_tr.iter(qn("w:tc")):
+        for p in tc.iter(qn("w:p")):
             for r in list(p):
-                tag = r.tag.split('}')[-1]
-                if tag == 'r':
+                tag = r.tag.split("}")[-1]
+                if tag == "r":
                     p.remove(r)
     ref_row._element.addnext(new_tr)
-    # Return the wrapper Row object
     for r in table.rows:
         if r._element is new_tr:
             return r
     return None
 
 
+def set_cell_text(cell, text):
+    """
+    Write text into the first paragraph of cell.
+    Supports [[N]] notation: those tokens become superscript runs.
+    """
+    p = cell.paragraphs[0]
+    # Remove all existing runs
+    for run in list(p.runs):
+        run._element.getparent().remove(run._element)
+
+    parts = _SUPER_RE.split(text)
+    # parts alternates: plain, number, plain, number, ...
+    for i, part in enumerate(parts):
+        if not part:
+            continue
+        run = p.add_run(part)
+        if i % 2 == 1:  # odd indices are the captured group (the number)
+            run.font.superscript = True
+
+
 def set_row_text(row, values):
     for cell, val in zip(row.cells, values):
-        # Clear existing paragraph runs but keep at least one paragraph
-        p = cell.paragraphs[0]
-        for run in list(p.runs):
-            run.text = ""
-        if p.runs:
-            p.runs[0].text = val
-        else:
-            p.add_run(val)
+        set_cell_text(cell, val)
+
+
+def delete_table(doc, table):
+    """Remove a table element from the document body."""
+    tbl = table._element
+    tbl.getparent().remove(tbl)
 
 
 def main():
     doc = Document(str(SRC))
     table = doc.tables[0]  # Table 0 = the empty template
 
-    # Walk through rows; identify each subheading and the empty rows beneath it,
-    # up to the next subheading. Replace those empty rows with our entries.
+    # Walk rows; fill subheadings with our entries
     rows_snapshot = list(table.rows)
 
-    # First pass: build a map subheading -> list of empty content rows directly under it
     section_map = {}
     heading_rows = {}
     current_heading = None
@@ -176,40 +201,33 @@ def main():
             if current_heading is not None:
                 section_map[current_heading].append(row)
 
-    # Second pass: fill / add / delete rows under each subheading
     for heading in SUBHEADINGS_IN_TEMPLATE:
         empty_rows = section_map.get(heading, [])
         entries = KRT.get(heading, [])
 
         if not entries:
-            # Section unused: leave one empty row (for user to delete in Word) or remove all extras
             for er in empty_rows:
                 remove_row(table, er)
             if heading in heading_rows:
                 remove_row(table, heading_rows[heading])
             continue
 
-        # Fill in the first len(entries) rows; add more if needed; delete leftovers
         for i, entry in enumerate(entries):
             if i < len(empty_rows):
                 set_row_text(empty_rows[i], entry)
             else:
-                # Need a new row — copy the last empty row's structure
                 ref = empty_rows[-1] if empty_rows else None
                 if ref is None:
-                    # Shouldn't happen — every heading has empty rows in template
                     print(f"WARN: no template rows under {heading}")
                     continue
                 new_row = insert_row_after(table, empty_rows[-1] if i > 0 else empty_rows[0])
                 set_row_text(new_row, entry)
                 empty_rows.append(new_row)
 
-        # Delete leftover empty rows beyond what we filled
         for j in range(len(entries), len(empty_rows)):
             remove_row(table, empty_rows[j])
 
-    # Final cleanup: remove any unused heading rows or fully empty rows that
-    # survived template manipulation.
+    # Clean up any stray rows
     for row in list(table.rows):
         txts = [c.text.strip() for c in row.cells]
         if txts[0] == "REAGENT or RESOURCE":
@@ -219,6 +237,11 @@ def main():
             continue
         if all(t == "" for t in txts):
             remove_row(table, row)
+
+    # Delete Appendix A example tables (Tables 1 and 2 in the template).
+    # Iterate in reverse so indices stay valid after each deletion.
+    for t in reversed(doc.tables[1:]):
+        delete_table(doc, t)
 
     doc.save(str(DST))
     print(f"Saved: {DST}")

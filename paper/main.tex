@@ -553,7 +553,7 @@ No sex-based comparisons were performed in this study, which used a single comme
 \subsubsection*{Virus strains}
 
 The attenuated Venezuelan equine encephalitis virus (VEEV) vaccine strain TC-83 was used for all infection experiments.
-Virus inoculum was prepared from P1 laboratory stock generated from an infectious cDNA clone originally provided by I.~Frolov and maintained under approved institutional biosafety procedures.
+Virus inoculum was prepared from P1 laboratory stock generated from an infectious cDNA clone originally provided by I.~Frolov\cite{ref-kinney1993tc83} and maintained under approved institutional biosafety procedures.
 All work involving VEEV TC-83 was conducted under BSL-2 containment with institutional biosafety approval.
 
 \subsection*{Method details}
@@ -637,6 +637,6 @@ The 2.5th and 97.5th percentiles of the resulting bootstrap distribution define 
 Well-level resampling was chosen because individual wells represent independent biological units; frame-level resampling would underestimate uncertainty by treating temporally correlated frames as independent observations.
 All experiments were run with a single random seed; variability across biological replicates is therefore represented by the held-out well/run design rather than repeated training runs.
 Software: Python 3.10, PyTorch 2.0, torchvision (ResNet50 with ImageNet weights).
-t-SNE visualizations\cite{ref-vandermaaten2008tsne} used scikit-learn with perplexity~30 and 1,000 iterations on 2,048-dimensional backbone features.
+t-SNE visualizations\cite{ref-vandermaaten2008tsne} used scikit-learn\cite{ref-pedregosa2011sklearn} with perplexity~30 and 1,000 iterations on 2,048-dimensional backbone features.
 
 \end{document}
