@@ -17,33 +17,52 @@ DST = Path(__file__).parent / "KRT_cell_tempo_filled.docx"
 KRT = {
     "Bacterial and virus strains": [
         ("Venezuelan equine encephalitis virus (VEEV), vaccine strain TC-83",
-         "Laboratory stock from I. Frolov",
-         "N/A"),
+         "P1 laboratory stock generated from an infectious cDNA clone provided by I. Frolov",
+         "Kinney et al., J. Virol. 1993"),
     ],
     "Chemicals, peptides, and recombinant proteins": [
+        ("Dulbecco's phosphate-buffered saline (DPBS)",
+         "Corning",
+         "Cat#21-030-CV"),
         ("EGM-2 Endothelial Cell Growth Medium-2 BulletKit",
          "Lonza",
          "Cat#CC-3162"),
-    ],
-    "Deposited data": [
-        ("Brightfield microscopy image data (HBMVEC + VEEV TC-83 time-lapse)",
-         "This paper",
-         "Available from lead contact upon request"),
-        ("Original source code (cell_tempo)",
-         "This paper",
-         "https://github.com/CAIR-LAB-WFUSM/cell_tempo"),
+        ("Fetal bovine serum (FBS)",
+         "Gibco",
+         "Cat#A5256801"),
+        ("Dulbecco's Modified Eagle Medium (DMEM)",
+         "Quality Biological",
+         "Cat#112-014-101CS"),
+        ("Trypsin (0.25%)-EDTA (0.02%)",
+         "Quality Biological",
+         "Cat#118-093-721"),
+        ("Minimum Essential Medium (EMEM) (2X) without Phenol Red and L-Glutamine",
+         "Quality Biological",
+         "Cat#115-073-101"),
+        ("Penicillin/Streptomycin solution (100X)",
+         "Corning",
+         "Cat#30-002-CI"),
     ],
     "Experimental models: Cell lines": [
-        ("Human: Primary brain microvascular endothelial cells (HBMVEC), male pediatric donor, passage 5",
+        ("Human: Primary brain microvascular endothelial cells (HBMVEC), male pediatric donor, passages 5-8",
          "Cell Systems (an AnaBios company)",
          "Cat#ACBRI 376; Lot#376.07.05.01.2F"),
+        ("African green monkey kidney epithelial cells (Vero)",
+         "ATCC",
+         "Cat#CCL-81"),
     ],
     "Software and algorithms": [
+        ("CELLCYTE Studio",
+         "CYTENA",
+         "https://www.cytena.com/products/cellcyte-x/"),
+        ("GraphPad Prism v11.0.0",
+         "GraphPad Software",
+         "https://www.graphpad.com"),
         ("Python (v3.10)",
          "Python Software Foundation",
          "https://www.python.org"),
         ("PyTorch (v2.0)",
-         "Meta AI",
+         "PyTorch",
          "https://pytorch.org"),
         ("torchvision (ResNet50 with ImageNet pretrained weights)",
          "PyTorch",
@@ -64,7 +83,7 @@ KRT = {
     "Other": [
         ("CELLCYTE X live-cell imaging system (10x objective, Enhanced Contour mode)",
          "CYTENA GmbH, Freiburg, Germany",
-         "https://www.cytena.com/products/cellcyte-x/"),
+         "CELLCYTE X Quick Start Guide; https://www.cytena.com/products/cellcyte-x/"),
         ("12-well tissue-culture plates (CELLSTAR)",
          "Greiner Bio-One",
          "Cat#665180"),
@@ -143,6 +162,7 @@ def main():
 
     # First pass: build a map subheading -> list of empty content rows directly under it
     section_map = {}
+    heading_rows = {}
     current_heading = None
     for row in rows_snapshot:
         txts = [c.text.strip() for c in row.cells]
@@ -150,6 +170,7 @@ def main():
             continue
         if is_subheading_row(row):
             current_heading = txts[0]
+            heading_rows[current_heading] = row
             section_map[current_heading] = []
         else:
             if current_heading is not None:
@@ -164,6 +185,8 @@ def main():
             # Section unused: leave one empty row (for user to delete in Word) or remove all extras
             for er in empty_rows:
                 remove_row(table, er)
+            if heading in heading_rows:
+                remove_row(table, heading_rows[heading])
             continue
 
         # Fill in the first len(entries) rows; add more if needed; delete leftovers
@@ -184,6 +207,18 @@ def main():
         # Delete leftover empty rows beyond what we filled
         for j in range(len(entries), len(empty_rows)):
             remove_row(table, empty_rows[j])
+
+    # Final cleanup: remove any unused heading rows or fully empty rows that
+    # survived template manipulation.
+    for row in list(table.rows):
+        txts = [c.text.strip() for c in row.cells]
+        if txts[0] == "REAGENT or RESOURCE":
+            continue
+        if is_subheading_row(row) and txts[0] not in KRT:
+            remove_row(table, row)
+            continue
+        if all(t == "" for t in txts):
+            remove_row(table, row)
 
     doc.save(str(DST))
     print(f"Saved: {DST}")
