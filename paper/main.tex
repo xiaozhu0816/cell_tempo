@@ -193,21 +193,21 @@ The long-span model's superior regression performance is consistent with broader
 \subsection*{Temporal encoding captures morphological trajectory and resolves late-stage ambiguity}
 
 The most significant finding of this study is that encoding morphological trajectory---rather than static snapshots---substantially improves infection detection robustness, particularly during late-stage infection.
-The $+$19--22 percentage-point binary advantage during 40--48 hours (up to $+$22 pp at 46.5 h) represents the difference between a clinically useful system and one that generates false negatives precisely when monitoring is most critical.
+The $+$19--22 percentage-point binary advantage during 40--48 hours (up to $+$22 pp at 46.5 h) represents a practically meaningful performance gap for longitudinal infection monitoring.
 
 The mechanism underlying this improvement is intuitive: in the pseudo-RGB representation, regions undergoing morphological change produce color shifts (e.g., a cell rounding over 6 hours appears as a red-to-blue gradient), while static regions appear gray.
 A standard CNN trained on ImageNet has learned to exploit color patterns, and the temporal pseudo-RGB encoding repurposes this capability for temporal discrimination without any architectural modification.
 Across the component comparison in Table~1, temporal encoding consistently improves both dedicated binary models and the unified four-class multi-task model, supporting the conclusion that learned features depend on morphological change over time rather than on static appearance alone.
 
 In real-world infection monitoring scenarios---antiviral drug screening, biosafety assessment, longitudinal infection studies---reliable detection must be maintained throughout the full experiment duration, not just during the intermediate window where CPE is most visually obvious.
-The single-frame model's collapse after 40 hours arises from a specific biological confound: at advanced CPE stages, infected cells have largely detached or lysed, leaving a sparse debris field that, in brightfield microscopy, can resemble the dense confluent monolayer of healthy mock cultures.
+The single-frame model's sharp degradation after 40 hours arises from a specific biological confound: at advanced CPE stages, infected cells have largely detached or lysed, leaving a sparse debris field that, in brightfield microscopy, can resemble the dense confluent monolayer of healthy mock cultures.
 The temporal model resolves this by capturing the trajectory leading to the current state: a well that has been progressively losing cells over hours looks fundamentally different in the pseudo-RGB representation from one that has maintained stable confluency, even if their current single frames are ambiguous.
 
 Existing deep learning approaches to CPE detection---including Petkidis et al.\cite{ref-petkidis2024natcomm} (adenovirus and HSV, 88--100\% binary accuracy), Andriasyan et al.\cite{ref-andriasyan2021iscience} (adenovirus), and Chen et al.\cite{ref-chen2022biomedicines} (influenza, parainfluenza, enterovirus)---demonstrate strong binary performance but treat each frame independently, discarding the temporal trajectory inherent in time-lapse imaging.
 AIRVIC\cite{ref-airvic2025} similarly operates on single frames.
 Because these studies use different virus--cell systems, datasets, and evaluation protocols, the reported accuracies are not directly comparable to ours; we cite them to delineate the methodological landscape rather than to claim a head-to-head improvement.
 None of these approaches have addressed late-stage morphological ambiguity, nor attempted dose-level severity classification from brightfield alone.
-The present work addresses both gaps through a unified temporal formulation that is virus-agnostic and architecturally simple.
+The present work addresses both gaps through a unified temporal formulation that is architecturally simple and potentially extensible across virus systems.
 
 The simplicity of pseudo-RGB encoding is a deliberate design choice rather than a limitation.
 Brightfield microscopy images are inherently grayscale (single-channel); pseudo-RGB encoding stacks three time-offset frames into a three-channel image that directly matches the input format expected by standard ImageNet-pretrained CNNs.
@@ -217,7 +217,7 @@ The temporal offset ablation (Table~2) confirms that the approach is robust to o
 
 \subsection*{Unified multi-task learning extends the model beyond binary detection}
 
-The component ablation reveals that temporal encoding is the primary driver of binary detection improvement, while multi-task learning contributes most to the harder four-class severity task (+4.7 pp for temporal models, +8.4 pp for single-frame models).
+The component ablation reveals that temporal encoding contributes more to binary detection improvement than multi-task learning alone, while multi-task learning contributes most to the harder four-class severity task (+4.7 pp for temporal models, +8.4 pp for single-frame models).
 This pattern is expected: binary discrimination between infected and uninfected is already well-served by temporal trajectory information, whereas distinguishing between dose levels (MOI~5 vs.\ MOI~1 vs.\ MOI~0.1) benefits from the additional supervisory signal provided by time regression, which encourages the shared backbone to learn temporally-ordered features that separate overlapping severity levels.
 Empirically, the four-class multi-task model's derived binary accuracy (93.5\%) slightly exceeds the dedicated binary multi-task model (93.2\%), consistent with the view that learning fine-grained severity features provides complementary signal for coarser binary discrimination.\cite{ref-caruana1997mtl}
 
@@ -282,7 +282,6 @@ During the preparation of this work, the author(s) used Claude (Anthropic) in or
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \begin{description}
-  \item Table S1. Per-class per-time-bin classification metrics (precision, recall, F1) in 3-hour bins
   \item Figure S1. Predicted infection probability over time for temporal and single-frame models, by condition
   \item Figure S2. Per-time-window four-class confusion matrices for temporal and single-frame models (0--12h, 12--24h, 24--48h)
   \item Figure S3. Per-condition binary AUROC over time for the unified temporal model, showing early detection onset and sustained reliability throughout the 48-hour imaging period
@@ -472,7 +471,7 @@ The primary output is robust binary infected-versus-mock detection, with four-cl
 \newpage
 
 %%% Table 1 — Component ablation
-\subsection*{Table 1. Component ablation across binary detection, severity classification, and time regression}
+\subsection*{Table 1. Component ablation across dedicated and multi-task model configurations}
 
 {\small\begin{tabular}{llcccccc}
 \toprule
@@ -489,18 +488,18 @@ SF 4cls multi-task & 4-class & & \checkmark & 91.0\%\textsuperscript{a} & 63.1\%
 \multicolumn{8}{l}{\emph{Temporal models}} \\
 Temporal binary cls-only & Binary & \checkmark & & 92.1\% & --- & --- & --- \\
 Temporal reg-only & Reg & \checkmark & & --- & --- & 1.41 & 0.979 \\
-Temporal binary multi-task & Binary & \checkmark & \checkmark & \textbf{93.2\%} & --- & \textbf{1.33} & \textbf{0.982} \\
-Temporal 4cls cls-only & 4-class & \checkmark & & 92.8\%\textsuperscript{a} & 65.9\% & --- & --- \\
-Temporal 4cls multi-task & 4-class & \checkmark & \checkmark & \textbf{93.5\%}\textsuperscript{a} & \textbf{70.6\%} & 1.34 & 0.981 \\
+Temporal binary multi-task & Binary & \checkmark & \checkmark & \underline{93.2\%} & --- & \textbf{1.33} & \textbf{0.982} \\
+Temporal 4cls cls-only & 4-class & \checkmark & & 92.8\%\textsuperscript{a} & \underline{65.9\%} & --- & --- \\
+Temporal 4cls multi-task & 4-class & \checkmark & \checkmark & \textbf{93.5\%}\textsuperscript{a} & \textbf{70.6\%} & \underline{1.34} & \underline{0.981} \\
 \bottomrule
 \end{tabular}}
 
 \bigskip
 
-Component ablation showing how temporal encoding and multi-task learning affect the primary binary readout as well as the secondary severity and regression outputs.
-Each row represents a different model configuration trained for 30 epochs under cross-well row-split validation.
-Temporal encoding stacks three time-offset frames as pseudo-RGB channels; multi-task models jointly optimize classification and time regression.
-Bold values indicate best performance per column. $\uparrow$: higher is better; $\downarrow$: lower is better.
+Component ablation comparing single-frame and temporal configurations across dedicated binary, dedicated regression, and four-class multi-task settings.
+Each row represents one model configuration trained for 30 epochs under cross-well row-split validation.
+Temporal encoding stacks three time-offset frames as pseudo-RGB channels, and multi-task models jointly optimize classification and time regression.
+Bold values indicate best performance per column; underlined values indicate second-best performance.
 
 \textsuperscript{a}Binary accuracy derived from four-class predictions by collapsing MOI classes into ``Infected.''
 
@@ -530,7 +529,7 @@ Effect of temporal span on multi-task classification and regression performance.
 All models use the four-class multi-task configuration with cross-well row-split validation.
 Binary accuracy is derived from four-class predictions.
 The standard ($-$6, $-$3, 0h) configuration achieves the best classification performance, while the long-span configuration achieves the best regression MAE, reflecting the trade-off between temporal context breadth and classification precision.
-Bootstrap 95\% CIs (well-level resampling) for derived binary accuracy: single-frame 91.0\% [85.1, 96.3], short 93.0\% [88.2, 96.8], standard 93.5\% [88.4, 97.4], long 92.2\% [87.0, 96.4]; for 4-class accuracy: single-frame 63.1\% [48.0, 78.1], standard 70.6\% [55.4, 84.1].
+Bootstrap 95\% CIs (well-level resampling) for derived binary accuracy: single-frame 91.0\% [85.1, 96.6], short 93.0\% [88.2, 96.8], standard 93.5\% [88.4, 97.4], long 92.2\% [87.0, 96.4]; for 4-class accuracy: single-frame 63.1\% [48.0, 78.1], standard 70.6\% [55.4, 84.1].
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
