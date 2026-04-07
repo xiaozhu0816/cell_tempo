@@ -591,7 +591,7 @@ To incorporate temporal context, each sample is represented as a three-channel i
   I_{\mathrm{pseudo}}(t) = \bigl[\,f(t{-}6\text{h}),\;\; f(t{-}3\text{h}),\;\; f(t)\,\bigr],
 \]
 where $f(\tau)$ denotes the normalized grayscale frame at time $\tau$.
-Each raw grayscale frame is first rescaled to [0,~1] using per-frame min--max normalization (subtract minimum, divide by maximum) and then quantized to 8-bit; after stacking the three time-offset frames as a pseudo-RGB image, channel-wise standardization is applied with mean $=[0.5, 0.5, 0.5]$ and standard deviation $=[0.25, 0.25, 0.25]$ before the tensor is passed to the ResNet50 backbone.
+Each raw grayscale frame is first rescaled to [0,~1] using per-frame min--max normalization by subtracting the frame minimum and dividing by the resulting dynamic range (equivalently, the post-subtraction maximum), and then quantized to 8-bit; after stacking the three time-offset frames as a pseudo-RGB image, channel-wise standardization is applied with mean $=[0.5, 0.5, 0.5]$ and standard deviation $=[0.25, 0.25, 0.25]$ before the tensor is passed to the ResNet50 backbone.
 The same per-frame normalization is applied identically to the temporal and single-frame configurations so that any performance difference reflects temporal encoding rather than preprocessing.
 The red channel maps to the oldest frame ($t{-}6$h), green to an intermediate frame ($t{-}3$h), and blue to the current frame ($t$).
 Regions undergoing morphological change appear as color shifts, while static regions appear gray.
