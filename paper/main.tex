@@ -10,7 +10,7 @@
 %%% - Temporal pseudo-RGB encoding detects viral infection from label-free microscopy
 %%% - Three time-offset brightfield frames stacked as RGB resolve late-stage ambiguity
 %%% - Unified temporal multi-task modeling reaches 93.5% binary detection accuracy
-%%% - Temporal encoding gains up to +22 pp over single-frame at 46.5 hours
+%%% - Temporal encoding gains up to +22 pp over single-frame at 48 hours
 %%% - The same model also predicts infection severity and time post-infection
 %%%
 %%% =====================================================
@@ -78,12 +78,7 @@
 \section*{SUMMARY}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-Automated detection of viral infection from label-free microscopy is a critical capability for high-throughput antiviral drug screening, vaccine and neutralizing-antibody evaluation, biodefense surveillance, and basic viral-kinetics research. Existing single-frame deep-learning methods, however, lack a temporal dimension and cannot represent the dynamic nature of an unfolding infection, leading to brittle detection---most acutely during late-stage infection (40--48 hours), when extensively damaged monolayers visually resemble dense uninfected cultures.
-Here, we present temporal pseudo-RGB encoding: three time-offset brightfield frames ($t{-}6$h, $t{-}3$h, $t$) are stacked as red, green, and blue channels so that morphological change appears as color variation, enabling any standard ImageNet-pretrained CNN to learn the trajectory of infection without architectural modification.
-We instantiate this approach as a unified temporal multi-task model and validate it on human brain microvascular endothelial cells (HBMVEC) infected with Venezuelan equine encephalitis virus (VEEV) TC-83, a clinically relevant blood--brain-barrier model for a Category B select agent.
-Using a stringent cross-well row-split protocol across three biological replicates, the unified temporal model achieves 93.5\% binary detection accuracy and a time-post-infection regression MAE of 1.34 hours (R$^2 = 0.981$), and maintains a $+$19--22 percentage-point binary advantage over the single-frame counterpart during 40--48 hours.
-Stratified analysis shows that the model establishes reliable detection (AUROC $\geq$ 0.99) by 10\,h for MOI 5 and MOI 1 and by 20\,h for MOI 0.1, with per-well binary accuracy of 0.92--0.99 across infected conditions.
-The same forward pass yields binary infected-versus-mock detection as the primary readout together with continuous time-since-infection estimation, supporting reliable label-free infection monitoring throughout the full experiment duration.
+Label-free detection of viral infection underpins antiviral screening, vaccine and neutralizing-antibody evaluation, and surveillance of emerging pathogens. Existing deep-learning approaches operate on isolated brightfield frames and therefore cannot represent an unfolding infection as a dynamic process. Here we describe temporal pseudo-RGB encoding, in which three time-offset brightfield frames ($t{-}6$\,h, $t{-}3$\,h, $t$) are stacked as red, green, and blue channels so that morphological change appears as color variation, allowing any ImageNet-pretrained CNN to be trained on infection trajectories without architectural modification. Applied to human brain microvascular endothelial cells (HBMVEC) infected with Venezuelan equine encephalitis virus (VEEV) TC-83---a blood--brain-barrier model for a Category B select agent---a unified multi-task network jointly predicts infected-versus-mock status and time post-infection. Across three biological replicates under a cross-well row-split protocol, the temporal model reaches 93.5\% binary detection accuracy and sustains a 19--22 percentage-point advantage over its single-frame counterpart during late-phase infection (40--48\,h). Binary AUROC reaches $\geq$0.99 by 10\,h for MOI\,5 and MOI\,1 and by 20\,h for MOI\,0.1, and time post-infection is recovered with MAE\,=\,1.34\,h ($R^2$\,=\,0.981).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section*{KEYWORDS}
@@ -100,10 +95,7 @@ Brightfield microscopy is particularly attractive for these applications because
 Building on this, recent deep-learning approaches have demonstrated promising results for automated detection of cytopathic effects (CPE)---the cell rounding, shrinkage, and detachment that mark productive viral infection---directly from brightfield images.\cite{ref-andriasyan2021iscience,ref-petkidis2024natcomm,ref-chen2022biomedicines,ref-airvic2025}
 However, all of these systems treat each frame independently and discard the temporal trajectory information that is inherent in time-lapse imaging.
 
-The central limitation is that single-frame classifiers lack a temporal dimension and therefore cannot represent the dynamic process by which an infection develops.
-This structural deficiency is most visibly exposed at late time points (40--48 hours post-infection): extensively damaged infected monolayers can paradoxically resemble dense confluent uninfected cultures when judged from a single static frame, confounding both manual scoring and automated analysis.\cite{ref-wang2020cpe,ref-hsiung1994cpe,ref-leland2007cpe}
-But the underlying issue is not specific to late stages---it is that any classifier built on isolated snapshots is forced to infer a dynamic process from a static image, making detection brittle whenever the static appearance is ambiguous.
-We hypothesize that encoding the \emph{trajectory} of morphological change---not just the current snapshot---can resolve this ambiguity throughout the full infection timeline.
+Infection, however, is a dynamic process, and a classifier built on isolated snapshots is forced to infer that process from a single static image---a limitation that becomes acute whenever the current appearance is ambiguous.\cite{ref-wang2020cpe,ref-hsiung1994cpe,ref-leland2007cpe} We reasoned that encoding the \emph{trajectory} of morphological change, rather than its instantaneous state, should make label-free detection more robust across the infection timeline.
 
 To address this, we propose temporal pseudo-RGB encoding: three time-offset brightfield frames ($t{-}6$h, $t{-}3$h, $t$) are stacked as the red, green, and blue channels of a single pseudo-color image, so that regions undergoing morphological change appear as color shifts while static regions appear gray.
 This representation allows any standard ImageNet-pretrained CNN to repurpose its learned color-processing features for temporal discrimination, without any architectural modification, additional parameters, or purpose-built temporal modules such as 3D convolutions, recurrent networks, or optical-flow estimators.
@@ -112,89 +104,43 @@ Combined with a unified multi-task training objective that jointly optimizes bin
 We instantiate the approach on human brain microvascular endothelial cells (HBMVEC), which constitute a critical component of the blood--brain barrier (BBB),\cite{ref-daneman2015bbb,ref-abbott2010bbb} infected with Venezuelan equine encephalitis virus (VEEV) TC-83.
 VEEV is an alphavirus classified as a Category B select agent that can traverse the BBB through infection of brain endothelial cells,\cite{ref-weaver2004veev,ref-schafer2011vee,ref-salimi2020mbio} so HBMVEC--VEEV provides a clinically relevant model for studying neurotropic viral infection dynamics in a system where reliable label-free monitoring has direct biodefense and antiviral-screening utility.
 
-Our approach makes four contributions.
-\textbf{First}, we introduce temporal pseudo-RGB encoding, an architecture-agnostic method that encodes morphological trajectory by stacking time-offset frames as pseudo-RGB channels and is compatible with any standard pretrained CNN backbone.
-\textbf{Second}, using this encoding within a unified multi-task model, we demonstrate robust binary infection detection across the full 48-hour timeline---reaching 93.5\% binary accuracy overall and maintaining 97--100\% binary accuracy during 40--48 hours, where the single-frame counterpart degrades by $-$19 to $-$22 percentage points (down to 75\% at 46.5\,h).
-\textbf{Third}, we provide a stratified detectability analysis quantifying when and under what conditions the model becomes reliable: per-condition AUROC analysis shows AUROC $\geq$ 0.99 first sustained at 10\,h for MOI 5 and MOI 1 and at 20\,h for MOI 0.1, and per-well binary accuracy reaches 0.92--0.99 across infected conditions; the same model also predicts time post-infection with MAE $= 1.34$\,h ($R^2 = 0.981$), enabling continuous monitoring rather than thresholded calls.
-\textbf{Fourth}, we validate generalization using a stringent cross-well row-split protocol across three independent biological replicates and held-out wells, with bootstrap 95\% CIs reported throughout.
+This work makes three contributions. First, we introduce temporal pseudo-RGB encoding, an architecture-agnostic representation of morphological trajectory that is compatible with any ImageNet-pretrained CNN backbone. Second, we show that the resulting multi-task network delivers robust binary infection detection across the full 48-hour timeline, reaching 93.5\% binary accuracy and remaining stable in the late phase where single-frame methods degrade sharply. Third, using a cross-well row-split protocol across three biological replicates, we map when detection becomes reliable as a function of viral dose and time, defining a practical operating envelope for label-free infection monitoring.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section*{RESULTS}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\subsection*{Component ablation establishes the contribution of each design element}
+\subsection*{Contribution of temporal encoding and multi-task supervision}
 
-To quantify the contribution of temporal encoding and multi-task supervision to binary infected-versus-mock detection---the primary evaluation target throughout this paper---we performed a systematic component ablation in which the two design elements are added independently to a common ResNet50 backbone (Table~1).
+Temporal encoding and multi-task supervision contribute independently to binary infected-versus-mock detection, and their effects combine (Table~1). A single-frame ResNet50 trained as a binary classifier reached 89.2\% accuracy. Replacing the input with temporal pseudo-RGB encoding raised this to 92.1\%, the larger of the two single-component improvements; adding auxiliary time-post-infection regression to the single-frame model gave a smaller but consistent gain to 91.0\%. The two improvements combine in the temporal multi-task network, which reaches \textbf{93.5\% binary accuracy} (bootstrap 95\% CI [88.4, 97.4]) and a time-regression MAE of 1.34\,h ($R^2 = 0.981$). We use this temporal multi-task model as the comparator throughout the rest of the paper.
 
-The single-frame binary classifier achieved 89.2\% binary accuracy.
-Adding temporal encoding alone improved binary detection to 92.1\% ($+$2.9\,pp), the larger of the two single-component contributions, while adding multi-task supervision alone (single-frame with auxiliary time regression) yielded 90.7\% ($+$1.5\,pp), confirming that the auxiliary supervisory signal contributes complementary information even without temporal encoding.
-Combining both, the unified temporal multi-task model reaches \textbf{93.5\% binary accuracy} (bootstrap 95\% CI $[88.4, 97.4]$; 1,000 iterations, well-level resampling, see STAR Methods) together with a time-post-infection regression MAE of 1.34\,h ($R^2 = 0.981$), and we use this unified temporal multi-task model as the comparator throughout the rest of the paper.
+The auxiliary regression signal also benefits the regression head itself: temporal encoding lowers MAE from 1.67 to 1.34\,h and improves $R^2$ from 0.971 to 0.981, so that classification and time prediction reinforce rather than compete on the shared backbone.\cite{ref-caruana1997mtl} A fuller breakdown across all model variants is reported in supplementary Table~S1.
 
-A binary-only multi-task variant (temporal encoding $+$ auxiliary time regression but trained without the severity head) reaches 93.2\% binary accuracy with MAE $= 1.33$\,h, slightly below the unified model's 93.5\%; we interpret this as evidence that the severity supervisory signal helps even coarse binary discrimination by encouraging the shared backbone to learn finer-grained morphological features.\cite{ref-caruana1997mtl}
-For time regression, temporal encoding improves MAE from 1.67\,h to 1.34\,h and $R^2$ from 0.971 to 0.981, confirming that temporal context benefits both binary robustness and the regression secondary output.
-Detailed ablation numbers for the four-class severity output across all configurations are reported in supplementary Table~S1.
+\subsection*{Temporal encoding sustains detection across the full infection timeline}
 
-\subsection*{Time-dependent detectability of viral infection}
+Because the pseudo-RGB channels expose morphological change directly to the network, the temporal model preserves binary detection across the 48-hour experiment, whereas the single-frame model loses accuracy in the late phase (Figure~2A). Between roughly 7 and 36 hours, while cytopathic effect is actively developing, the two models are nearly indistinguishable and both exceed 93\% binary accuracy. They diverge sharply beyond 40 hours: the single-frame model degrades to 75--80\%, while the temporal model holds at 97--100\%, and by 48\,h the gap reaches roughly $+$22\,pp.
 
-To characterize when reliable infection detection is established and how it is sustained over time, we analyzed binary detection accuracy in 3-hour bins across the full 48-hour imaging timeline (Figure~2).
-
-\textbf{Onset of reliable detection.}
-Per-condition binary AUROC analysis (Figure~S3) shows that the unified temporal model establishes reliable detection (AUROC $\geq 0.99$, sustained across two consecutive bins) at \textbf{10 hours post-infection for MOI 5 and MOI 1}, and at \textbf{20 hours for MOI 0.1}.
-Once reliable detection is established, all three conditions maintain AUROC $\geq 0.99$ through the full 46.5-hour imaging period.
-The longer onset for MOI 0.1 reflects its biology: only $\sim$10\% of cells are initially infected, so visible morphological change takes longer to accumulate at the well level.
-The earlier reliable detection for MOI 5 and MOI 1 is consistent with their rapid, high-titer CPE progression.
-
-\textbf{Late-stage robustness.}
-The temporal advantage is most pronounced during late-stage infection (Figure~2).
-During the early phase (0--6 hours), both temporal and single-frame models perform comparably ($\sim$70\% binary accuracy), reflecting that CPE has not yet visibly manifested and that the temporal model's earlier channels are partially clamped to the experiment boundary; this interval defines a pre-onset window prior to reliable detection.
-Between 7 and 36 hours, both models achieve high binary accuracy ($>$93\%), with temporal encoding providing marginal improvement as CPE actively develops.
-During the late phase (40--48 hours), the two models diverge sharply: the single-frame model degrades to 75--80\% binary accuracy, while the temporal model maintains 97--100\% binary accuracy.
-At 43.5 hours, the temporal model achieves 100\% binary accuracy compared to 80.6\% for the single-frame model ($+$19.4\,pp); at 46.5 hours, the advantage reaches $+$22.5\,pp (97.5\% vs.\ 75.0\%).
-
-This late-stage degradation of the single-frame model is attributable to high-confluency morphological ambiguity: extensively damaged infected monolayers share visual features with dense mock cultures when viewed in isolation.
-The temporal model resolves this ambiguity by encoding the \emph{trajectory} of morphological change---a progressively deteriorating monolayer produces distinct color patterns in the pseudo-RGB representation compared to a stably confluent culture.
-This combination of early detection (by 10--20\,h depending on MOI) and sustained late-stage robustness is essential for practical applications such as antiviral screening, where reliable readouts are required across the full duration of an experiment.
+The late-phase degradation of the single-frame model reflects a specific confound. Extensively damaged infected monolayers, viewed in isolation, share visual features with dense confluent mock cultures, and a classifier built on isolated snapshots has no principled way to separate the two. The temporal model resolves the ambiguity by making the preceding trajectory visible in the input: a well that has been progressively losing cells produces a characteristic color signature in the pseudo-RGB representation that a stably confluent mock well does not. A symmetric effect appears at the opposite end of the timeline. During the first six hours, CPE has not yet manifested and the temporal channels are partially clamped against the experiment boundary, so both models hover near 70\% accuracy and the temporal advantage is not yet available; this defines a brief pre-onset window before reliable detection.
 
 \subsection*{MOI-dependent detectability of viral infection}
 
-To characterize how reliably the unified temporal model detects infection across viral dose levels, we report per-well binary detection accuracy stratified by MOI and biological replicate (Figure~3).
-Across the 12 held-out test wells (3 biological replicates $\times$ 4 conditions, single well per condition per run after the row-split protocol), the unified temporal model achieves the following binary accuracies:
+The temporal model becomes reliable earliest at higher viral dose. Per-condition binary AUROC first exceeds 0.99 and stays there by 10\,h post-infection for MOI\,5 and MOI\,1, and by 20\,h for MOI\,0.1 (Figure~S3); thereafter all three infected conditions remain above this threshold for the rest of the experiment. The longer onset at MOI\,0.1 is consistent with its biology: only $\sim$10\% of cells are initially infected and well-level morphological change accumulates more slowly than at the higher MOIs, where rapid synchronous CPE produces a strong signal within the first 10 hours.
 
-\begin{itemize}
-  \item \textbf{MOI~5}: 0.92, 0.98, 0.97 across Runs 1--3 (mean 0.957);
-  \item \textbf{MOI~1}: 0.99, 0.96, 1.00 (mean 0.983);
-  \item \textbf{MOI~0.1}: 0.99, 0.83, 0.71 (mean 0.843);
-  \item \textbf{Mock}: 0.98, 0.92, 0.96 (mean 0.953).
-\end{itemize}
+Per-well binary accuracy across the 12 held-out test wells (3 biological replicates $\times$ 4 conditions) reinforces this picture (Figure~3). At moderate-to-high viral dose the model is near saturation: MOI\,5 wells reach 0.92, 0.98 and 0.97 across the three runs, and MOI\,1 wells 0.99, 0.96 and 1.00. At MOI\,0.1, performance is more variable across biological replicates (0.99, 0.83, 0.71), reflecting the subtler and more heterogeneous CPE phenotype expected at low viral dose. Mock wells reach 0.98, 0.92 and 0.96, indicating that the model does not produce excess false positives on uninfected controls. Taken together with the timeline above, these results delineate the practical operating envelope of label-free monitoring: reliable detection across the full duration of the experiment at moderate-to-high MOI, and useful---though more variable---detection at the low-MOI condition where CPE is sparse and delayed.
 
-Binary detection accuracy is high across most wells ($\geq$0.91 for 10 of 12 wells), with the lowest values concentrated in the MOI~0.1 column (range 0.71--0.99), consistent with the subtler and more heterogeneous CPE phenotype expected at low viral dose.
-Mock wells achieve consistently high accuracy (0.92--0.98) across all three biological replicates, demonstrating that the model does not generate excess false positives.
-Combined with the time-to-detection analysis above (10\,h for MOI 5/1, 20\,h for MOI 0.1), this stratified view delineates the practical operating envelope of the model: it is reliable across the full duration of the experiment for moderate-to-high MOI conditions, and remains useful---though more variable across biological replicates---at the low-MOI condition where CPE is sparse and delayed.
+The same network also produces a four-class severity readout that serves primarily as an auxiliary supervisory signal for the shared backbone; we present its confusion matrix in supplementary Figure~S5 and the full severity numbers in supplementary Table~S1.
 
-As a secondary supervisory signal, the unified temporal model also produces a four-class severity readout (MOI~5 vs.\ MOI~1 vs.\ MOI~0.1 vs.\ mock) which serves principally to enrich the shared backbone with finer-grained morphological features; the overall and per-time-window four-class confusion matrices are reported in supplementary Figures~S5 and~S2 and supplementary Table~S1.
+\subsection*{Time post-infection is recovered as a continuous secondary readout}
 
-\subsection*{Time regression achieves high accuracy with practical utility}
+The same forward pass that produces the binary call also recovers time post-infection with MAE $= 1.34$\,h and $R^2 = 0.981$ (Figure~4), substantially better than the single-frame counterpart (MAE $= 1.67$\,h, $R^2 = 0.971$). The advantage is largest during the earliest hours, where the temporal model reaches MAE $= 0.36$\,h at $t = 1.5$\,h compared to 0.83\,h for the single-frame model---about a twofold improvement---reflecting that frame-to-frame differences carry strong time-ordering information even when absolute appearance is weakly informative. As a continuous output, this estimate supports monitoring use cases beyond binary thresholding, such as ranking wells by progression stage or aligning temporally heterogeneous experiments, all from the same model that produces the primary infected-versus-mock readout.
 
-As a secondary output of the unified temporal multi-task model, the regression head predicts time post-infection with MAE $= 1.34$\,h and $R^2 = 0.981$ (Figure~4).
-The temporal model consistently outperforms the single-frame multi-task counterpart (MAE $= 1.67$\,h, $R^2 = 0.971$) across the timeline, with the largest advantage during early hours: at 1.5 hours post-infection, the temporal model achieves MAE $= 0.36$\,h compared to 0.83\,h for single-frame (2$\times$ improvement).
-This suggests that the temporal channels provide strong time-ordering cues even when classification confidence is low, as the frame-to-frame differences encode the rate of morphological change independent of absolute appearance.
-The continuous time-since-infection estimate enables monitoring use cases beyond binary thresholding---for instance, ranking wells by progression stage or aligning temporally heterogeneous experiments---using the same forward pass that produces the binary readout.
+\subsection*{Learned representations reflect both infection status and time}
 
-\subsection*{Feature space analysis reveals improved class separation with temporal encoding}
+t-SNE projections of the ResNet50 backbone features (Figure~S5) make the effect of temporal encoding directly visible. The temporal model produces tighter, more clearly separated clusters for each infection condition, whereas the single-frame model shows substantial overlap between infection levels, particularly between MOI\,5 and MOI\,1 at late time points. When the same points are colored by hours post-infection, a smooth time gradient is visible within each cluster of the temporal model, indicating that the shared representation encodes infection status and temporal progression jointly---as expected from the multi-task training objective.
 
-To visualize the effect of temporal encoding on learned representations, we computed t-SNE embeddings of backbone features from both models (Figure~S6).
-The temporal model produces tighter, more clearly separated clusters for each infection condition, with distinct boundaries between infected classes and mock controls; the single-frame model shows substantial overlap between infection levels, particularly between MOI~5 and MOI~1 at late time points.
-When features are colored by hours post-infection, the temporal model exhibits a smooth time gradient within each cluster, indicating that the learned representation encodes both infection status and temporal progression---consistent with the multi-task training objective, which requires the shared backbone to support both classification and time regression.
+\subsection*{Performance is robust to the choice of temporal offset}
 
-\subsection*{Temporal offset ablation identifies optimal encoding span}
-
-To investigate the effect of temporal span on detection performance, we trained the unified temporal multi-task model with three offset configurations (Table~2): short ($-$3, $-$1.5, 0\,h), standard ($-$6, $-$3, 0\,h), and long ($-$12, $-$6, 0\,h), in addition to the single-frame baseline ($0, 0, 0$\,h).
-
-The single-frame baseline achieved 91.0\% binary accuracy.
-The short-span temporal model improved to 93.0\%, the standard span to 93.5\% (best binary accuracy), and the long span to 92.2\% (best regression MAE of 1.24\,h).
-The standard ($-$6, $-$3, 0\,h) configuration offers the best overall balance: it provides sufficient temporal context for late-stage discrimination while minimizing early-frame clamping artifacts.
-The long-span model's superior regression performance is consistent with broader temporal context providing finer time-ordering cues, though the slight decrease in binary accuracy may reflect increased noise from spanning a wider morphological window.
-All temporal spans (3--12\,h) outperform the single-frame baseline, confirming that the approach is robust to the specific choice of offset.
+The standard ($-$6, $-$3, 0\,h) configuration is not narrowly tuned: all temporal spans tested (3--12\,h) outperform the single-frame baseline, and binary detection varies only modestly across them (Table~2). Binary accuracy peaks at the standard 6-hour span (93.5\%); the shorter 3-hour span gives 93.0\%, the longer 12-hour span gives 92.2\%, and the single-frame baseline gives 91.0\%. Time regression behaves slightly differently and improves monotonically with span (best MAE 1.24\,h for the 12-hour span), consistent with broader temporal context providing finer time-ordering cues at some cost in late-phase classification, where wider windows begin to span heterogeneous morphological states.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section*{DISCUSSION}
@@ -203,7 +149,7 @@ All temporal spans (3--12\,h) outperform the single-frame baseline, confirming t
 \subsection*{Temporal encoding captures morphological trajectory and resolves late-stage ambiguity}
 
 The most significant finding of this study is that encoding morphological trajectory---rather than static snapshots---substantially improves infection detection robustness, particularly during late-stage infection.
-The $+$19--22 percentage-point binary advantage during 40--48 hours (up to $+$22 pp at 46.5 h) represents a practically meaningful performance gap for longitudinal infection monitoring.
+The $+$19--22 percentage-point binary advantage during the late phase (40--48\,h) represents a practically meaningful performance gap for longitudinal infection monitoring.
 
 The mechanism underlying this improvement is intuitive: in the pseudo-RGB representation, regions undergoing morphological change produce color shifts (e.g., a cell rounding over 6 hours appears as a red-to-blue gradient), while static regions appear gray.
 A standard CNN trained on ImageNet has learned to exploit color patterns, and the temporal pseudo-RGB encoding repurposes this capability for temporal discrimination without any architectural modification.
@@ -227,12 +173,9 @@ The temporal offset ablation (Table~2) confirms that the approach is robust to o
 
 \subsection*{Multi-task supervision improves binary detection through complementary signal}
 
-The component ablation reveals that temporal encoding is the dominant contributor to binary detection improvement, while multi-task supervision (auxiliary time regression and a severity head) provides a smaller but consistent additional gain.
-Empirically, the unified temporal multi-task model's binary accuracy (93.5\%) slightly exceeds the binary-only temporal multi-task variant (93.2\%), consistent with the view that the auxiliary supervisory signals encourage the shared backbone to learn finer-grained morphological features that benefit even coarse binary discrimination.\cite{ref-caruana1997mtl}
-The mechanism is intuitive: requiring the backbone to also predict continuous time post-infection and to distinguish dose levels forces it to represent the rate and stage of morphological change, not just the binary infected/uninfected distinction.
+The ablation in Table~1 indicates that temporal encoding is the dominant contributor to binary detection performance, while multi-task supervision contributes a smaller but consistent additional gain. Requiring the backbone to also predict continuous time post-infection forces it to represent the rate and stage of morphological change, and this auxiliary signal sharpens even the coarse infected-versus-mock decision.\cite{ref-caruana1997mtl} The benefit is reciprocal: temporal encoding lowers regression MAE from 1.67 to 1.34\,h, so that classification and time prediction reinforce rather than compete on shared features.
 
-Our model is intentionally unified rather than a dedicated binary classifier: a single forward pass produces (1) the primary binary infected-versus-mock readout and (2) a continuous time-since-infection estimate.
-This formulation supports downstream analysis needs---such as ranking wells by progression stage or temporally aligning experiments---without maintaining separate models, while preserving binary detection as the headline result.
+The model is intentionally unified rather than a dedicated binary classifier. A single forward pass yields the primary binary infected-versus-mock call together with a continuous time-since-infection estimate, which supports downstream uses such as ranking wells by progression stage or temporally aligning experiments without maintaining separate models.
 
 \subsection*{Limitations of the study}
 
@@ -290,14 +233,13 @@ During the preparation of this work, the author(s) used Claude (Anthropic) in or
 
 \begin{description}
   \item Figure S1. Predicted infection probability over time for temporal and single-frame models, by condition
-  \item Figure S2. Per-time-window four-class confusion matrices for temporal and single-frame models (0--12h, 12--24h, 24--48h)
-  \item Figure S3. Per-condition binary AUROC over time for the unified temporal model, showing early detection onset and sustained reliability throughout the 48-hour imaging period
-  \item Figure S4. Temporal pseudo-RGB encoding visualized as color variation: representative input channels and composite at three time points
-  \item Figure S5. Four-class confusion matrices (overall and by analysis window) for the unified temporal multi-task model
-  \item Figure S6. t-SNE visualization of ResNet50 backbone features for temporal vs single-frame models
-  \item Figure S7. Grad-CAM attention maps for representative infected and mock test samples at two time points ($t=20$h and $t=40$h)
-  \item Figure S8. Dataset hierarchy and temporal sample construction
-  \item Table S1. Full component ablation including four-class severity accuracy
+  \item Figure S2. Per-condition binary AUROC over time for the temporal model, showing early detection onset and sustained reliability throughout the 48-hour imaging period
+  \item Figure S3. Temporal pseudo-RGB encoding visualized as color variation: representative input channels and composite at three time points
+  \item Figure S4. Four-class severity confusion matrices for the temporal multi-task model and the single-frame counterpart
+  \item Figure S5. t-SNE visualization of ResNet50 backbone features for temporal vs single-frame models
+  \item Figure S6. Grad-CAM attention maps for representative infected and mock test samples at two time points ($t=20$h and $t=40$h)
+  \item Figure S7. Dataset hierarchy and temporal sample construction
+  \item Table S1. Full component ablation including four-class severity accuracy and binary multi-task variants
   \item Table S2. Full temporal offset ablation including four-class severity accuracy
 \end{description}
 
@@ -372,36 +314,26 @@ In the single-frame model, this separation is less stable: infected-condition pr
 
 \newpage
 
-%%% Figure S2 — Per-time-window confusion matrices
-\noindent\includegraphics[width=\linewidth]{figS5_confusion_per_phase.pdf}
-
-\subsection*{Figure S2. Four-class confusion matrices by time window}
-
-Row-normalized confusion matrices for the temporal model (top row) and single-frame model (bottom row), computed in three non-overlapping time windows: 0--12h, 12--24h, and 24--48h.
-Values indicate the fraction of true-class samples predicted as each class (row percentages).
-Both models show higher MOI~0.1 confusion during 0--12h, reflecting the sparse initial infection in low-dose wells.
-In the 24--48h window, the temporal model maintains robust discrimination across all four conditions, whereas the single-frame model shows increased Mock confusion for infected classes---consistent with the late-stage morphological ambiguity described in the main text.
-
-\newpage
-
-%%% Figure S3 — Per-condition AUROC over time (temporal model only)
+%%% Figure S2 — Per-condition AUROC over time (temporal model only) [was S3]
 \noindent\includegraphics[width=\linewidth]{figS6_auroc_over_time.pdf}
 
-\subsection*{Figure S3. Per-condition detection reliability throughout the 48-hour infection timeline}
+\subsection*{Figure S2. Per-condition detection reliability throughout the 48-hour infection timeline}
 
 Binary AUROC (infected condition vs Mock) computed in 3-hour bins across the full imaging period for the unified temporal multi-task model.
 Three panels correspond to the three infected conditions (MOI~5, MOI~1, MOI~0.1), each evaluated against Mock controls.
 The dashed horizontal line marks AUROC\,=\,0.99; shaded regions indicate time bins exceeding this threshold.
 Vertical dotted lines indicate the earliest time bin at which AUROC\,$\geq$\,0.99 is first sustained across two consecutive bins.
 MOI~5 reaches reliable detection earliest owing to rapid, high-titer CPE progression, while MOI~0.1 requires more time as only a fraction of cells are initially infected.
-Once reliable detection is established, all three conditions maintain AUROC\,$\geq$\,0.99 through the full 46.5-hour imaging period.
+Once reliable detection is established, all three conditions maintain AUROC\,$\geq$\,0.99 through the full 48-hour imaging period.
 
 \newpage
 
-%%% Figure S4 — Temporal pseudo-RGB encoding visualized (was old main Fig 2)
+%%% Figure S3 — Temporal pseudo-RGB encoding visualized [was S4]
+%%% NOTE: please use a zoomed-in version of fig_temporal_rgb_examples.png for final submission;
+%%% the present at-page-width rendering shows the cell morphology at a scale that is too small.
 \noindent\includegraphics[width=\linewidth]{fig_temporal_rgb_examples.png}
 
-\subsection*{Figure S4. Temporal pseudo-RGB encoding visualized as color variation}
+\subsection*{Figure S3. Temporal pseudo-RGB encoding visualized as color variation}
 
 Representative temporal pseudo-RGB samples showing how temporal change in the brightfield signal manifests as color variation in the encoded image.
 For each example, the three input grayscale frames at offsets $t{-}6$h, $t{-}3$h, and $t$ are shown alongside the resulting pseudo-RGB composite in which the three frames are mapped to the red, green, and blue channels respectively.
@@ -410,12 +342,16 @@ This encoding allows a standard ImageNet-pretrained CNN to leverage its learned 
 
 \newpage
 
-%%% Figure S5 — Four-class confusion matrices (was old main Fig 4)
+%%% Figure S4 — Four-class confusion matrices [was S5]
+%%% NOTE: in the present version of fig2_confusion_matrices.pdf, the right panel's
+%%% "Temporal model" / "Single-frame model" header text is rendered visually over the
+%%% top of the matrix cells. Please regenerate the figure so that the panel headers
+%%% sit above the matrix grid (outside the axes box), not embedded inside it.
 \noindent\includegraphics[width=\linewidth]{fig2_confusion_matrices.pdf}
 
-\subsection*{Figure S5. Four-class confusion matrices for the unified temporal multi-task model}
+\subsection*{Figure S4. Four-class severity confusion matrices}
 
-Row-normalized confusion matrices for the four-class severity head of the unified temporal multi-task model (left) and the single-frame multi-task counterpart (right), aggregated across the full 0--48h test set.
+Row-normalized confusion matrices for the four-class severity head of the temporal multi-task model (left) and the single-frame multi-task counterpart (right), aggregated across the full 0--48h test set.
 Rows correspond to ground-truth conditions (MOI~5, MOI~1, MOI~0.1, Mock); columns correspond to predicted classes; values indicate the fraction of true-class samples assigned to each predicted class.
 The temporal model improves overall four-class accuracy from 65.9\% to 70.6\%, with the largest gains on MOI~5 and Mock; MOI~1 and MOI~0.1 remain the most confused pair, consistent with the partially overlapping CPE kinetics expected for adjacent low-dose infection conditions.
 The four-class severity head is reported here as a secondary output and a supervisory signal that improves the primary binary detection task; it is not the main evaluation target of the manuscript.
@@ -466,34 +402,31 @@ Temporal pseudo-RGB samples are constructed by selecting three frames at offsets
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %%% Table S1 — Full component ablation including 4cls accuracy
-\subsection*{Table S1. Full component ablation including four-class severity accuracy}
+\subsection*{Table S1. Full component ablation including four-class severity accuracy and binary multi-task variants}
 
 {\small\begin{tabular}{llcccccc}
 \toprule
 \textbf{Method} & \textbf{Task} & \textbf{Temporal} & \textbf{Multi-task} & \textbf{Bin Acc} & \textbf{4cls Acc} & \textbf{MAE (h)} & \textbf{R$^2$} \\
 \midrule
 \multicolumn{8}{l}{\emph{Single-frame models}} \\
-SF binary cls-only & Binary & & & 89.2\% & --- & --- & --- \\
-SF reg-only & Reg & & & --- & --- & 1.45 & 0.979 \\
-SF binary multi-task & Binary & & \checkmark & 90.7\% & --- & 1.49 & 0.977 \\
-SF four-class cls-only & 4-class & & & --- & 64.3\% & --- & --- \\
-SF four-class multi-task & 4-class & & \checkmark & 91.0\%\textsuperscript{a} & 65.9\% & 1.67 & 0.971 \\
-
+SF binary cls-only       & Binary  &           &           & 89.2\%             & ---                & ---             & ---             \\
+SF reg-only              & Reg     &           &           & ---                & ---                & 1.45            & 0.979           \\
+SF binary multi-task     & Binary  &           & \checkmark & 90.7\%             & ---                & 1.49            & 0.977           \\
+SF 4-class cls-only      & 4-class &           &           & 88.0\%\textsuperscript{a} & 64.3\%      & ---             & ---             \\
+SF 4-class multi-task    & 4-class &           & \checkmark & 91.0\%\textsuperscript{a} & 65.9\%      & 1.67            & 0.971           \\
 \midrule
 \multicolumn{8}{l}{\emph{Temporal models}} \\
-Temporal binary cls-only & Binary & \checkmark & & 92.1\% & --- & --- & --- \\
-Temporal reg-only & Reg & \checkmark & & --- & --- & 1.41 & 0.979 \\
-Temporal binary multi-task & Binary & \checkmark & \checkmark & \underline{93.2\%} & --- & \textbf{1.33} & \textbf{0.982} \\
-Temporal four-class cls-only & 4-class & \checkmark & & --- & 68.7\% & --- & --- \\
-\textbf{Unified temporal multi-task} & 4-class & \checkmark & \checkmark & \textbf{93.5\%}\textsuperscript{a} & \textbf{70.6\%} & \underline{1.34} & \underline{0.981} \\
+Tempo binary cls-only    & Binary  & \checkmark &           & 92.1\%             & ---                & ---             & ---             \\
+Tempo reg-only           & Reg     & \checkmark &           & ---                & ---                & 1.41            & 0.979           \\
+Tempo binary multi-task  & Binary  & \checkmark & \checkmark & \underline{93.2\%} & ---                & \textbf{1.33}   & \textbf{0.982}  \\
+Tempo 4-class cls-only   & 4-class & \checkmark &           & 93.8\%\textsuperscript{a} & \underline{68.7\%} & ---      & ---             \\
+\textbf{Tempo 4-class multi-task} & 4-class & \checkmark & \checkmark & \textbf{93.5\%}\textsuperscript{a} & \textbf{70.6\%} & \underline{1.34} & \underline{0.981} \\
 \bottomrule
 \end{tabular}}
 
 \bigskip
 
-Full component ablation including the four-class severity accuracy column omitted from main Table~1.
-The temporal four-class result (70.6\%) is reported here as supervisory-signal evidence: it improves over the single-frame counterpart (65.9\%) by 4.7~percentage points, indicating that temporal encoding provides additional discriminative information for finer-grained MOI distinctions, but the absolute level is not yet practically actionable for MOI-level classification (see Discussion).
-Bold values indicate best performance per column; underlined values indicate second-best.
+Full component ablation including auxiliary four-class severity accuracy and the binary multi-task variants omitted from main Table~1. The temporal four-class result (70.6\%) is reported here as supervisory-signal evidence: it improves over the single-frame counterpart (65.9\%) by 4.7~percentage points, indicating that temporal encoding provides additional discriminative information for finer-grained MOI distinctions, but the absolute level is not yet practically actionable for MOI-level classification (see Discussion). The binary multi-task and four-class multi-task variants achieve closely matched binary accuracy (93.2\% vs.\ 93.5\%); we use the four-class variant as the headline ``Tempo multitask'' in main Table~1 because it provides the auxiliary severity readout discussed in the MOI-dependent detectability section. Bold values indicate best performance per column; underlined values indicate second-best.
 
 \textsuperscript{a}Binary accuracy derived from four-class predictions by collapsing MOI classes 0--2 into ``Infected.''
 
@@ -506,10 +439,10 @@ Bold values indicate best performance per column; underlined values indicate sec
 \toprule
 \textbf{Offset config} & \textbf{Span} & \textbf{Bin Acc ($\uparrow$)} & \textbf{4cls Acc ($\uparrow$)} & \textbf{F1\textsubscript{macro} ($\uparrow$)} & \textbf{MAE (h) ($\downarrow$)} & \textbf{R$^2$ ($\uparrow$)} \\
 \midrule
-Single-frame [0, 0, 0] & 0h & 91.0\% & 65.9\% & 0.633 & 1.67 & 0.971 \\
-Short [$-$3, $-$1.5, 0] & 3h & 93.0\% & 68.4\% & 0.648 & 1.45 & 0.979 \\
-Standard [$-$6, $-$3, 0] & 6h & \textbf{93.5\%} & \textbf{70.6\%} & \textbf{0.703} & 1.34 & 0.981 \\
-Long [$-$12, $-$6, 0] & 12h & 92.2\% & 69.1\% & 0.668 & \textbf{1.24} & \textbf{0.984} \\
+Single-frame [0, 0, 0]   & 0h  & 91.0\%             & 65.9\%             & 0.633             & 1.67             & 0.971           \\
+Short [$-$3, $-$1.5, 0]  & 3h  & \underline{93.0\%} & 68.4\%             & 0.648             & 1.45             & 0.979           \\
+Standard [$-$6, $-$3, 0] & 6h  & \textbf{93.5\%}    & \textbf{70.6\%}    & \textbf{0.703}    & \underline{1.34} & \underline{0.981} \\
+Long [$-$12, $-$6, 0]    & 12h & 92.2\%             & \underline{69.1\%} & \underline{0.668} & \textbf{1.24}    & \textbf{0.984}  \\
 \bottomrule
 \end{tabular}
 
@@ -524,41 +457,32 @@ Four-class accuracy follows the same trend as binary accuracy across offset conf
 
 \newpage
 
-%%% Table 1 — Component ablation (binary-focused; full table with 4cls in supplementary Table S1)
-\subsection*{Table 1. Component ablation: contribution of temporal encoding and multi-task supervision to binary detection}
+%%% Table 1 — Component ablation (clean 6-row binary-first version; full table in supplementary Table S1)
+\subsection*{Table 1. Contribution of temporal encoding and multi-task supervision to binary detection}
 
-{\small\begin{tabular}{llccccc}
+{\small\begin{tabular}{lcccccc}
 \toprule
-\textbf{Method} & \textbf{Task} & \textbf{Temporal} & \textbf{Multi-task} & \textbf{Bin Acc} & \textbf{MAE (h)} & \textbf{R$^2$} \\
+\textbf{Method} & \textbf{Temporal} & \textbf{Multi-task} & \textbf{Bin Acc} & \textbf{MAE (h)} & \textbf{R$^2$} \\
 \midrule
-\multicolumn{7}{l}{\emph{Single-frame models}} \\
-SF binary cls-only & Binary & & & 89.2\% & --- & --- \\
-SF reg-only & Reg & & & --- & 1.45 & 0.979 \\
-SF binary multi-task & Binary & & \checkmark & 90.7\% & 1.49 & 0.977 \\
-SF multi-task (severity head) & 4-class & & \checkmark & 91.0\%\textsuperscript{a} & 1.67 & 0.971 \\
-
+\multicolumn{6}{l}{\emph{Single-frame models}} \\
+SF cls only       &           &           & 89.2\%             & ---             & ---             \\
+SF reg only       &           &           & ---                & 1.45            & 0.979           \\
+SF multitask      &           & \checkmark & 91.0\%\textsuperscript{a} & 1.67     & 0.971           \\
 \midrule
-\multicolumn{7}{l}{\emph{Temporal models}} \\
-Temporal binary cls-only & Binary & \checkmark & & 92.1\% & --- & --- \\
-Temporal reg-only & Reg & \checkmark & & --- & 1.41 & 0.979 \\
-Temporal binary multi-task & Binary & \checkmark & \checkmark & \underline{93.2\%} & \textbf{1.33} & \textbf{0.982} \\
-\textbf{Unified temporal multi-task} & 4-class & \checkmark & \checkmark & \textbf{93.5\%}\textsuperscript{a} & \underline{1.34} & \underline{0.981} \\
+\multicolumn{6}{l}{\emph{Temporal models}} \\
+Tempo cls only    & \checkmark &           & \underline{92.1\%} & ---             & ---             \\
+Tempo reg only    & \checkmark &           & ---                & \underline{1.41}& \underline{0.979}\\
+\textbf{Tempo multitask} & \checkmark & \checkmark & \textbf{93.5\%}\textsuperscript{a} & \textbf{1.34} & \textbf{0.981} \\
 \bottomrule
 \end{tabular}}
 
 \bigskip
 
-Component ablation evaluating the independent contributions of temporal encoding and multi-task supervision to \emph{binary infected-versus-mock detection}, the primary evaluation target throughout this paper.
-Each row represents one model configuration trained for 30 epochs under cross-well row-split validation.
-Temporal encoding stacks three time-offset frames as pseudo-RGB channels; multi-task models jointly optimize classification and time regression.
-Bold values indicate best performance per column; underlined values indicate second-best.
-The four-class severity classification accuracy of each configuration is reported in supplementary Table~S1.
+Each row represents one model configuration trained for 30 epochs under cross-well row-split validation. Temporal encoding stacks three time-offset frames as pseudo-RGB channels; multi-task models jointly optimize classification and time regression on a shared ResNet50 backbone. Bold values indicate the best performance per column; underlined values indicate second-best. The full ablation, including auxiliary severity-head accuracy and pure binary multi-task variants, is reported in supplementary Table~S1.
 
-\textsuperscript{a}Binary accuracy derived from four-class predictions by collapsing MOI classes 0--2 into ``Infected.''
+\medskip\noindent\textsuperscript{a}Binary accuracy is computed from the same shared classification head used to report supplementary severity numbers.
 
-\medskip\noindent\textsuperscript{b}Bootstrap 95\% CIs (1,000 iterations, well-level resampling).
-Unified temporal multi-task: binary 93.5\% [88.4, 97.4], MAE 1.34 [1.17, 1.53]\,h, $R^2$ 0.981 [0.975, 0.987].
-SF multi-task (severity head): binary 91.0\% [85.1, 96.6], MAE 1.67 [1.41, 2.03]\,h, $R^2$ 0.971 [0.958, 0.980].
+\medskip\noindent Bootstrap 95\% CIs (1,000 iterations, well-level resampling): Tempo multitask binary 93.5\% [88.4, 97.4], MAE 1.34 [1.17, 1.53]\,h, $R^2$ 0.981 [0.975, 0.987]; SF multitask binary 91.0\% [85.1, 96.6], MAE 1.67 [1.41, 2.03]\,h, $R^2$ 0.971 [0.958, 0.980].
 
 \newpage
 
@@ -569,10 +493,10 @@ SF multi-task (severity head): binary 91.0\% [85.1, 96.6], MAE 1.67 [1.41, 2.03]
 \toprule
 \textbf{Offset config} & \textbf{Span} & \textbf{Bin Acc ($\uparrow$)} & \textbf{F1\textsubscript{macro} ($\uparrow$)} & \textbf{MAE (h) ($\downarrow$)} & \textbf{R$^2$ ($\uparrow$)} \\
 \midrule
-Single-frame [0, 0, 0] & 0h & 91.0\% & 0.633 & 1.67 & 0.971 \\
-Short [$-$3, $-$1.5, 0] & 3h & 93.0\% & 0.648 & 1.45 & 0.979 \\
-Standard [$-$6, $-$3, 0] & 6h & \textbf{93.5\%} & \textbf{0.703} & 1.34 & 0.981 \\
-Long [$-$12, $-$6, 0] & 12h & 92.2\% & 0.668 & \textbf{1.24} & \textbf{0.984} \\
+Single-frame [0, 0, 0]   & 0h  & 91.0\%             & 0.633             & 1.67             & 0.971           \\
+Short [$-$3, $-$1.5, 0]  & 3h  & \underline{93.0\%} & 0.648             & 1.45             & 0.979           \\
+Standard [$-$6, $-$3, 0] & 6h  & \textbf{93.5\%}    & \textbf{0.703}    & \underline{1.34} & \underline{0.981} \\
+Long [$-$12, $-$6, 0]    & 12h & 92.2\%             & \underline{0.668} & \textbf{1.24}    & \textbf{0.984}  \\
 \bottomrule
 \end{tabular}
 
