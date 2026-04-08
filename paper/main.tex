@@ -7,21 +7,20 @@
 %%% =====================================================
 %%% HIGHLIGHTS (upload separately; <=85 characters each)
 %%% =====================================================
-%%% - Temporal pseudo-RGB encoding detects viral infection from label-free microscopy
-%%% - Three time-offset brightfield frames stacked as RGB resolve late-stage ambiguity
-%%% - Unified temporal multi-task modeling reaches 93.5% binary detection accuracy
-%%% - Temporal encoding gains up to +22 pp over single-frame at 48 hours
-%%% - The same model also predicts infection severity and time post-infection
+%%% - Temporal pseudo-RGB encoding turns label-free time-lapse into a CNN input
+%%% - Stacked time-offset frames make morphological change visible as color
+%%% - Temporal multi-task model reaches 93.5% binary detection accuracy on VEEV
+%%% - Temporal encoding gains up to +22 pp over single-frame in the late phase
+%%% - Same forward pass also recovers time post-infection (MAE 1.34 h)
 %%%
 %%% =====================================================
 %%% eTOC BLURB / IN BRIEF (upload separately; ~50 words)
 %%% =====================================================
-%%% Zhu et al. present a temporal pseudo-RGB encoding strategy that stacks
-%%% time-offset brightfield frames as color channels, enabling standard CNNs
-%%% to detect viral infection from label-free microscopy. Combined with
-%%% multi-task learning, the approach maintains robust detection throughout
-%%% 48 hours of VEEV infection, overcoming late-stage morphological ambiguity
-%%% that causes single-frame methods to fail.
+%%% Zhu et al. introduce temporal pseudo-RGB encoding, which stacks time-offset
+%%% brightfield frames as color channels so that any standard CNN can be trained
+%%% on infection trajectories. Applied to HBMVEC infected with VEEV TC-83, the
+%%% approach delivers robust binary detection throughout 48 hours of infection
+%%% and recovers time post-infection from the same forward pass.
 %%%
 %%% =====================================================
 %%% GRAPHICAL ABSTRACT (upload separately as image file)
@@ -124,11 +123,11 @@ The late-phase degradation of the single-frame model reflects a specific confoun
 
 \subsection*{MOI-dependent detectability of viral infection}
 
-The temporal model becomes reliable earliest at higher viral dose. Per-condition binary AUROC first exceeds 0.99 and stays there by 10\,h post-infection for MOI\,5 and MOI\,1, and by 20\,h for MOI\,0.1 (Figure~S3); thereafter all three infected conditions remain above this threshold for the rest of the experiment. The longer onset at MOI\,0.1 is consistent with its biology: only $\sim$10\% of cells are initially infected and well-level morphological change accumulates more slowly than at the higher MOIs, where rapid synchronous CPE produces a strong signal within the first 10 hours.
+The temporal model becomes reliable earliest at higher viral dose. Per-condition binary AUROC first exceeds 0.99 and stays there by 10\,h post-infection for MOI\,5 and MOI\,1, and by 20\,h for MOI\,0.1 (Figure~S2); thereafter all three infected conditions remain above this threshold for the rest of the experiment. The longer onset at MOI\,0.1 is consistent with its biology: only $\sim$10\% of cells are initially infected and well-level morphological change accumulates more slowly than at the higher MOIs, where rapid synchronous CPE produces a strong signal within the first 10 hours.
 
 Per-well binary accuracy across the 12 held-out test wells (3 biological replicates $\times$ 4 conditions) reinforces this picture (Figure~3). At moderate-to-high viral dose the model is near saturation: MOI\,5 wells reach 0.92, 0.98 and 0.97 across the three runs, and MOI\,1 wells 0.99, 0.96 and 1.00. At MOI\,0.1, performance is more variable across biological replicates (0.99, 0.83, 0.71), reflecting the subtler and more heterogeneous CPE phenotype expected at low viral dose. Mock wells reach 0.98, 0.92 and 0.96, indicating that the model does not produce excess false positives on uninfected controls. Taken together with the timeline above, these results delineate the practical operating envelope of label-free monitoring: reliable detection across the full duration of the experiment at moderate-to-high MOI, and useful---though more variable---detection at the low-MOI condition where CPE is sparse and delayed.
 
-The same network also produces a four-class severity readout that serves primarily as an auxiliary supervisory signal for the shared backbone; we present its confusion matrix in supplementary Figure~S5 and the full severity numbers in supplementary Table~S1.
+The same network also produces a four-class severity readout that serves primarily as an auxiliary supervisory signal for the shared backbone; its confusion matrix is shown in supplementary Figure~S4 and the full severity numbers are reported in supplementary Table~S1.
 
 \subsection*{Time post-infection is recovered as a continuous secondary readout}
 
@@ -148,28 +147,11 @@ The standard ($-$6, $-$3, 0\,h) configuration is not narrowly tuned: all tempora
 
 \subsection*{Temporal encoding captures morphological trajectory and resolves late-stage ambiguity}
 
-The most significant finding of this study is that encoding morphological trajectory---rather than static snapshots---substantially improves infection detection robustness, particularly during late-stage infection.
-The $+$19--22 percentage-point binary advantage during the late phase (40--48\,h) represents a practically meaningful performance gap for longitudinal infection monitoring.
+The central finding of this study is that encoding morphological trajectory, rather than the instantaneous state of the culture, substantially improves the robustness of label-free infection detection. The 19--22 percentage-point gain during the late phase (40--48\,h) is the largest single contribution we observe and is the regime where it matters most for practical use---antiviral drug screening, biosafety assessment, longitudinal infection studies all require detection that holds across the entire experiment, not only during the intermediate window where cytopathic effect is at its most visually obvious.
 
-The mechanism underlying this improvement is intuitive: in the pseudo-RGB representation, regions undergoing morphological change produce color shifts (e.g., a cell rounding over 6 hours appears as a red-to-blue gradient), while static regions appear gray.
-A standard CNN trained on ImageNet has learned to exploit color patterns, and the temporal pseudo-RGB encoding repurposes this capability for temporal discrimination without any architectural modification.
-Across the component comparison in Table~1, temporal encoding consistently improves binary detection across every model configuration tested, supporting the conclusion that learned features depend on morphological change over time rather than on static appearance alone.
+Existing deep-learning approaches to CPE detection, including the work of Petkidis et al.\cite{ref-petkidis2024natcomm} on adenovirus and HSV, Andriasyan et al.\cite{ref-andriasyan2021iscience} on adenovirus, Chen et al.\cite{ref-chen2022biomedicines} on influenza, parainfluenza and enterovirus, and AIRVIC\cite{ref-airvic2025}, all operate on isolated frames. Because these studies use different virus--cell systems, datasets and evaluation protocols, their accuracies are not directly comparable to ours, and we cite them only to delineate the methodological landscape; what is consistent across them is that none have addressed late-stage morphological ambiguity, and none have characterized when reliable detection becomes available as a function of viral dose and time post-infection. The present work fills both gaps with a single unified formulation that is architecturally simple and, in principle, extensible to other virus systems.
 
-In real-world infection monitoring scenarios---antiviral drug screening, biosafety assessment, longitudinal infection studies---reliable detection must be maintained throughout the full experiment duration, not just during the intermediate window where CPE is most visually obvious.
-The single-frame model's sharp degradation after 40 hours arises from a specific biological confound: at advanced CPE stages, infected cells have largely detached or lysed, leaving a sparse debris field that, in brightfield microscopy, can resemble the dense confluent monolayer of healthy mock cultures.
-The temporal model resolves this by capturing the trajectory leading to the current state: a well that has been progressively losing cells over hours looks fundamentally different in the pseudo-RGB representation from one that has maintained stable confluency, even if their current single frames are ambiguous.
-
-Existing deep learning approaches to CPE detection---including Petkidis et al.\cite{ref-petkidis2024natcomm} (adenovirus and HSV, 88--100\% binary accuracy), Andriasyan et al.\cite{ref-andriasyan2021iscience} (adenovirus), and Chen et al.\cite{ref-chen2022biomedicines} (influenza, parainfluenza, enterovirus)---demonstrate strong binary performance but treat each frame independently, discarding the temporal trajectory inherent in time-lapse imaging.
-AIRVIC\cite{ref-airvic2025} similarly operates on single frames.
-Because these studies use different virus--cell systems, datasets, and evaluation protocols, the reported accuracies are not directly comparable to ours; we cite them to delineate the methodological landscape rather than to claim a head-to-head improvement.
-None of these approaches have addressed late-stage morphological ambiguity, nor have they characterized when reliable detection is established as a function of viral dose and time post-infection.
-The present work addresses these gaps through a unified temporal formulation that is architecturally simple and potentially extensible across virus systems, and through a stratified per-MOI, per-time detectability analysis that delineates the practical operating envelope of label-free infection monitoring.
-
-The simplicity of pseudo-RGB encoding is a deliberate design choice rather than a limitation.
-Brightfield microscopy images are inherently grayscale (single-channel); pseudo-RGB encoding stacks three time-offset frames into a three-channel image that directly matches the input format expected by standard ImageNet-pretrained CNNs.
-This repurposes the color-processing capabilities already learned from natural images for temporal discrimination, without requiring purpose-built temporal architectures such as 3D convolutional networks, recurrent models, or optical flow estimators.
-Such architectures require substantially more data and training infrastructure and offer no interpretability advantage over the pseudo-RGB approach, which makes morphological change directly visible as color variation in the input.
-The temporal offset ablation (Table~2) confirms that the approach is robust to offset choice, with the 3--12 hour span all outperforming the single-frame baseline.
+The simplicity of pseudo-RGB encoding is a deliberate design choice. Brightfield images are inherently single-channel; mapping three time-offset frames to the three channels expected by an ImageNet-pretrained CNN repurposes color-processing features that the network has already learned from natural images, with no architectural change and no purpose-built temporal modules such as 3D convolutions, recurrent networks or optical-flow estimators. The temporal offset ablation (Table~2) shows that this design is robust to the specific choice of span: every configuration in the 3--12\,h range outperforms the single-frame baseline.
 
 \subsection*{Multi-task supervision improves binary detection through complementary signal}
 
@@ -252,48 +234,37 @@ During the preparation of this work, the author(s) used Claude (Anthropic) in or
 
 \subsection*{Figure 1. End-to-end overview of temporal pseudo-RGB encoding for label-free infection detection}
 
-Study-level schematic summarizing the end-to-end workflow of this manuscript.
-HBMVEC cultures infected with VEEV TC-83 at multiple MOI levels (MOI~5, MOI~1, MOI~0.1, and mock) are imaged by brightfield microscopy every 30 minutes over 48 hours.
-For each time point, three time-offset frames ($t{-}6$h, $t{-}3$h, $t$) are stacked as the red, green, and blue channels of a single pseudo-color image, in which morphological change appears as color variation while static regions remain gray.
-The resulting pseudo-RGB image is processed by an ImageNet-pretrained ResNet50 backbone trained as a unified multi-task network.
-The primary output is robust binary infected-versus-mock detection; continuous time-post-infection regression and a four-class severity head provide secondary outputs and serve as auxiliary supervisory signals that improve binary detection.
+HBMVEC cultures infected with VEEV TC-83 at MOI\,5, MOI\,1, MOI\,0.1 and mock are imaged by brightfield microscopy every 30 minutes over 48 hours. For each time point, three time-offset frames ($t{-}6$\,h, $t{-}3$\,h, $t$) are stacked as the red, green and blue channels of a pseudo-color image, in which morphological change appears as color variation and static regions remain gray. The resulting pseudo-RGB image is passed to an ImageNet-pretrained ResNet50 backbone trained as a multi-task network whose primary output is binary infected-versus-mock detection; a continuous time-post-infection estimate is produced as a secondary output, and a four-class severity head provides an auxiliary supervisory signal during training.
 
 \newpage
 
 %%% Figure 2 — Time-dependent detectability (was Figure 3)
 \noindent\includegraphics[width=\linewidth]{fig1_main_comparison.pdf}
 
-\subsection*{Figure 2. Time-dependent detectability: temporal encoding maintains robust binary detection throughout 48 hours of infection}
+\subsection*{Figure 2. Temporal encoding sustains binary detection across the 48-hour infection timeline}
 
-Comparison of the unified temporal multi-task model and the single-frame multi-task counterpart across the 48-hour infection timeline.
-(A) Binary (infected vs.\ mock) accuracy over time: the temporal model (blue) maintains $>$97\% binary accuracy at 40--48\,h, while the single-frame model (orange, dashed) drops to 75\%. Shaded regions mark the early phase (0--6\,h, red) and late phase (40--48\,h, blue) as defined in the text.
-(B) Per-condition reliability: the four-class severity panel is provided for context; the headline result is that the temporal model sustains stable detection performance throughout the timeline, whereas the single-frame model degrades sharply at late time points.
-(C) Time-regression MAE over time: the temporal model achieves consistently lower prediction error, with the largest advantage during early hours (0--6\,h) when temporal channels carry the strongest time-ordering signal.
+Comparison of the temporal multi-task model and the single-frame multi-task counterpart across the 48-hour timeline.
+(A) Binary infected-versus-mock accuracy in 3-hour bins: the temporal model (blue) maintains $>$97\% accuracy at 40--48\,h, while the single-frame model (orange, dashed) drops to roughly 75\%. Shaded regions mark the early phase (0--6\,h, red) and late phase (40--48\,h, blue) as defined in the text.
+(B) Per-condition four-class accuracy over time, included for context; the temporal model is uniformly more stable than the single-frame model.
+(C) Time-regression MAE over time: the temporal model achieves consistently lower prediction error, with the largest advantage during the first six hours, when frame-to-frame differences carry strong time-ordering signal.
 
 \newpage
 
 %%% Figure 3 — MOI-dependent detectability: per-well binary heatmap (was Figure S4)
 \noindent\includegraphics[width=\linewidth]{figS7_well_heatmap.pdf}
 
-\subsection*{Figure 3. MOI-dependent detectability: per-well binary classification accuracy across biological replicates}
+\subsection*{Figure 3. Per-well binary detection accuracy stratified by MOI and biological replicate}
 
-Heatmap of per-well binary detection accuracy (Infected vs.\ Mock) for the unified temporal multi-task model, evaluated on the 12 held-out test wells.
-Wells are organized by biological replicate (rows: Run~1, Run~2, Run~3) and infection condition (columns: MOI~5, MOI~1, MOI~0.1, Mock).
-Annotated values indicate per-well binary accuracy; the color scale ranges from red (low) through white to green (high).
-Binary detection is high across most wells ($\geq$0.91 for 10 of 12 wells), with the lowest values concentrated in the MOI~0.1 column (range 0.71--0.99), consistent with the subtler and more heterogeneous CPE phenotype expected at low viral dose.
-Mock wells achieve consistently high accuracy (0.92--0.98) across all three biological replicates, demonstrating that the model does not generate excess false positives.
+Heatmap of per-well binary detection accuracy (Infected vs.\ Mock) for the temporal multi-task model, evaluated on the 12 held-out test wells. Wells are organized by biological replicate (rows: Run~1, Run~2, Run~3) and infection condition (columns: MOI~5, MOI~1, MOI~0.1, Mock); annotated values give per-well binary accuracy and the color scale runs from red (low) through white to green (high). Detection is near-saturated for MOI~5 and MOI~1 across all three runs, while MOI~0.1 shows greater between-run variability (0.71--0.99) consistent with the subtler and more heterogeneous CPE phenotype at low viral dose. Mock wells reach 0.92--0.98, indicating that the model does not produce excess false positives on uninfected controls.
 
 \newpage
 
 %%% Figure 4 — Time-post-infection regression scatter (was Figure 6)
 \noindent\includegraphics[width=\linewidth]{fig4_regression.pdf}
 
-\subsection*{Figure 4. The unified temporal multi-task model accurately predicts time post-infection}
+\subsection*{Figure 4. Time post-infection is recovered as a continuous secondary readout}
 
-Predicted vs.\ actual time post-infection for (A) the unified temporal multi-task model (MAE $= 1.34$\,h, $R^2 = 0.981$) and (B) the single-frame multi-task counterpart (MAE $= 1.67$\,h, $R^2 = 0.971$).
-Points are colored by infection condition (MOI~5, MOI~1, MOI~0.1, Mock).
-The temporal model achieves tighter clustering around the diagonal, particularly during early hours (0--6\,h) where temporal channels provide strong time-ordering cues.
-The dashed line indicates perfect prediction ($y = x$).
+Predicted vs.\ actual time post-infection for (A) the temporal multi-task model (MAE $= 1.34$\,h, $R^2 = 0.981$) and (B) the single-frame multi-task counterpart (MAE $= 1.67$\,h, $R^2 = 0.971$). Points are colored by infection condition (MOI~5, MOI~1, MOI~0.1, Mock). The temporal model produces tighter clustering around the diagonal, with the largest improvement during the first six hours, when frame-to-frame differences carry the strongest time-ordering signal. The dashed line marks perfect prediction ($y = x$).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section*{SUPPLEMENTARY FIGURE LEGENDS}
@@ -358,10 +329,10 @@ The four-class severity head is reported here as a secondary output and a superv
 
 \newpage
 
-%%% Figure S6 — t-SNE feature space (was old main Fig 5)
+%%% Figure S5 — t-SNE feature space [was S6]
 \noindent\includegraphics[width=\linewidth]{fig_tsne_temporal_vs_single.png}
 
-\subsection*{Figure S6. t-SNE visualization of ResNet50 backbone features}
+\subsection*{Figure S5. t-SNE visualization of ResNet50 backbone features}
 
 Two-dimensional t-SNE embeddings of 2{,}048-dimensional ResNet50 backbone features extracted from held-out test samples for the unified temporal multi-task model (left) and the single-frame multi-task counterpart (right).
 Points are colored by ground-truth condition (MOI~5, MOI~1, MOI~0.1, Mock).
@@ -370,10 +341,12 @@ t-SNE was computed with perplexity~30 over 1{,}000 iterations using scikit-learn
 
 \newpage
 
-%%% Figure S7 — Grad-CAM attention maps (was old S5)
+%%% Figure S6 — Grad-CAM attention maps [was S7]
+%%% NOTE: please use a zoomed-in version of figS8_cam_attention.pdf for final submission;
+%%% the present at-page-width rendering shows the attention overlays at a scale that is too small.
 \noindent\includegraphics[width=\linewidth]{figS8_cam_attention.pdf}
 
-\subsection*{Figure S7. Grad-CAM attention maps for representative test samples}
+\subsection*{Figure S6. Grad-CAM attention maps for representative test samples}
 
 Gradient-weighted class activation mapping (Grad-CAM) for four representative test samples from Run~3, arranged in a $2\times4$ grid.
 Rows correspond to time points (top: $t=20$h; bottom: $t=40$h); within each row, columns show: MOI~5 pseudo-RGB input, MOI~5 Grad-CAM overlay, Mock pseudo-RGB input, Mock Grad-CAM overlay.
@@ -385,10 +358,10 @@ These patterns are provided as qualitative context for model interpretability an
 
 \newpage
 
-%%% Figure S8 — Dataset hierarchy schematic (was old S6)
+%%% Figure S7 — Dataset hierarchy schematic [was S8]
 \noindent\includegraphics[width=\linewidth]{figS6_dataset_hierarchy.pdf}
 
-\subsection*{Figure S8. Dataset hierarchy and temporal sample construction}
+\subsection*{Figure S7. Dataset hierarchy and temporal sample construction}
 
 Schematic overview of the acquisition hierarchy used in this study.
 Each biological run corresponds to one 12-well plate containing four conditions (MOI~5, MOI~1, MOI~0.1, and Mock) with three technical replicate wells per condition.
@@ -548,7 +521,7 @@ After viral adsorption, cells were washed with phosphate-buffered saline (PBS) a
 \subsubsection*{Experimental design and biological replicates}
 
 Three independent biological replicates were performed on separate days and are referred to here as Run~1, Run~2, and Run~3 for presentation clarity.
-At the dataset level, the acquisition hierarchy is run $\rightarrow$ well $\rightarrow$ position $\rightarrow$ timepoint $\rightarrow$ temporal pseudo-RGB sample (Figure~S8).
+At the dataset level, the acquisition hierarchy is run $\rightarrow$ well $\rightarrow$ position $\rightarrow$ timepoint $\rightarrow$ temporal pseudo-RGB sample (Figure~S7).
 Each biological replicate used a separate 12-well plate with four conditions (MOI~5, MOI~1, MOI~0.1, and Mock) and three technical replicate wells per condition (rows A, B, and C).
 Each well was imaged at 36 acquisition positions in a 6$\times$6 grid pattern over 96 time points collected every 30 minutes over 48 hours.
 This design yields a hierarchical dataset comprising 3 biological runs, 12 wells per run, 36 acquisition positions per well, and 96 frames per position, for a total of 124,416 frame-level samples.
