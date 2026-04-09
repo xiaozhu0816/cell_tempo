@@ -151,11 +151,14 @@ windows = [
     ("24–48 h", lambda s: s["hours"] >= 24),
 ]
 
-# 2 rows (models) × 3 cols (windows) + 1 narrow colorbar col
-fig = plt.figure(figsize=(13, 8.0))
+# 2 rows (models) × 3 cols (windows) + 1 narrow colorbar col.
+# We leave extra vertical headroom at the top of each row for the row label
+# ("Temporal model" / "Single-frame model"), which is drawn outside the
+# plotting box below.
+fig = plt.figure(figsize=(13, 8.6))
 gs = mgridspec.GridSpec(2, 4,
                         width_ratios=[1, 1, 1, 0.055],
-                        wspace=0.28, hspace=0.42,
+                        wspace=0.28, hspace=0.70,
                         figure=fig)
 
 row_labels = ["Temporal model", "Single-frame model"]
@@ -188,9 +191,9 @@ for row_i, (samples, row_label) in enumerate([
         if col_i == 0:
             ax.set_ylabel("True", fontsize=9, labelpad=10)
 
-        # Column header on top row only
-        if row_i == 0:
-            ax.set_title(win_label, fontweight="bold", pad=8, fontsize=11)
+        # Per-column time-window header, rendered on every row so the
+        # 12-24h / 24-48h columns are clearly labeled in the single-frame row too.
+        ax.set_title(win_label, fontweight="normal", pad=6, fontsize=10)
 
         for i in range(4):
             for j in range(4):
@@ -199,18 +202,24 @@ for row_i, (samples, row_label) in enumerate([
                         color="white" if v > 55 else "black",
                         fontsize=8, fontweight="bold")
 
-for row_i, row_label in enumerate(row_labels):
-    row_axes = [fig.axes[row_i * 3 + j] for j in range(3)]
-    top_y = max(ax.get_position().y1 for ax in row_axes)
-    left_x = min(ax.get_position().x0 for ax in row_axes)
-    fig.text(left_x, top_y + 0.015, row_label,
-             fontsize=11, fontweight="bold", ha="left", va="bottom")
-
+# Colorbar first, so that the final figure layout is locked in before we
+# compute row-label positions from the final axes geometry.
 cax = fig.add_subplot(gs[:, 3])
 cb  = fig.colorbar(last_im, cax=cax)
 cb.set_label("Row %", fontsize=9)
 cb.ax.tick_params(labelsize=8)
-fig.subplots_adjust(left=0.08, right=0.95, bottom=0.08, top=0.93)
+fig.subplots_adjust(left=0.07, right=0.94, bottom=0.07, top=0.92)
+
+# Now place the row labels OUTSIDE the matrix grids, using the final
+# (post-subplots_adjust) axes positions. We draw each row label above the
+# top edge of its three matrices, in the gutter created by hspace=0.70.
+fig.canvas.draw()  # ensure tight positions are resolved
+for row_i, row_label in enumerate(row_labels):
+    row_axes = [fig.axes[row_i * 3 + j] for j in range(3)]
+    top_y  = max(ax.get_position().y1 for ax in row_axes)
+    left_x = min(ax.get_position().x0 for ax in row_axes)
+    fig.text(left_x, min(top_y + 0.035, 0.995), row_label,
+             fontsize=12, fontweight="bold", ha="left", va="bottom")
 
 for ext in ("pdf", "png"):
     out = OUT / f"figS5_confusion_per_phase.{ext}"
