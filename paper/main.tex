@@ -324,7 +324,7 @@ This encoding allows a standard ImageNet-pretrained CNN to leverage its learned 
 
 Row-normalized confusion matrices for the four-class severity head of the temporal multi-task model (left) and the single-frame multi-task counterpart (right), aggregated across the full 0--48h test set.
 Rows correspond to ground-truth conditions (MOI~5, MOI~1, MOI~0.1, Mock); columns correspond to predicted classes; values indicate the fraction of true-class samples assigned to each predicted class.
-The temporal model improves overall four-class accuracy from 65.9\% to 70.6\%, with the largest gains on MOI~5 and Mock; MOI~1 and MOI~0.1 remain the most confused pair, consistent with the partially overlapping CPE kinetics expected for adjacent low-dose infection conditions.
+The temporal model improves overall four-class accuracy from 63.1\% to 70.6\%, with the largest gains on MOI~5 and Mock; MOI~1 and MOI~0.1 remain the most confused pair, consistent with the partially overlapping CPE kinetics expected for adjacent low-dose infection conditions.
 The four-class severity head is reported here as a secondary output and a supervisory signal that improves the primary binary detection task; it is not the main evaluation target of the manuscript.
 
 \newpage
@@ -385,21 +385,21 @@ Temporal pseudo-RGB samples are constructed by selecting three frames at offsets
 SF binary cls-only       & Binary  &           &           & 89.2\%             & ---                & ---             & ---             \\
 SF reg-only              & Reg     &           &           & ---                & ---                & 1.45            & 0.979           \\
 SF binary multi-task     & Binary  &           & \checkmark & 90.7\%             & ---                & 1.49            & 0.977           \\
-SF 4-class cls-only      & 4-class &           &           & 88.0\%\textsuperscript{a} & 64.3\%      & ---             & ---             \\
-SF 4-class multi-task    & 4-class &           & \checkmark & 91.0\%\textsuperscript{a} & 65.9\%      & 1.67            & 0.971           \\
+SF 4-class cls-only      & 4-class &           &           & 88.0\%\textsuperscript{a} & 54.7\%      & ---             & ---             \\
+SF 4-class multi-task    & 4-class &           & \checkmark & 91.0\%\textsuperscript{a} & 63.1\%      & 1.67            & 0.971           \\
 \midrule
 \multicolumn{8}{l}{\emph{Temporal models}} \\
 Tempo binary cls-only    & Binary  & \checkmark &           & 92.1\%             & ---                & ---             & ---             \\
 Tempo reg-only           & Reg     & \checkmark &           & ---                & ---                & 1.41            & 0.979           \\
 Tempo binary multi-task  & Binary  & \checkmark & \checkmark & \underline{93.2\%} & ---                & \textbf{1.33}   & \textbf{0.982}  \\
-Tempo 4-class cls-only   & 4-class & \checkmark &           & 93.8\%\textsuperscript{a} & \underline{68.7\%} & ---      & ---             \\
+Tempo 4-class cls-only   & 4-class & \checkmark &           & 92.8\%\textsuperscript{a} & \underline{65.9\%} & ---      & ---             \\
 \textbf{Tempo 4-class multi-task} & 4-class & \checkmark & \checkmark & \textbf{93.5\%}\textsuperscript{a} & \textbf{70.6\%} & \underline{1.34} & \underline{0.981} \\
 \bottomrule
 \end{tabular}}
 
 \bigskip
 
-Full component ablation including auxiliary four-class severity accuracy and the binary multi-task variants omitted from main Table~1. The temporal four-class result (70.6\%) is reported here as supervisory-signal evidence: it improves over the single-frame counterpart (65.9\%) by 4.7~percentage points, indicating that temporal encoding provides additional discriminative information for finer-grained MOI distinctions, but the absolute level is not yet practically actionable for MOI-level classification (see Discussion). The binary multi-task and four-class multi-task variants achieve closely matched binary accuracy (93.2\% vs.\ 93.5\%); we use the four-class variant as the headline ``Tempo multitask'' in main Table~1 because it provides the auxiliary severity readout discussed in the MOI-dependent detectability section. Bold values indicate best performance per column; underlined values indicate second-best.
+Full component ablation including auxiliary four-class severity accuracy and the binary multi-task variants omitted from main Table~1. The temporal four-class result (70.6\%) is reported here as supervisory-signal evidence: it improves over the single-frame counterpart (63.1\%) by 7.5~percentage points, indicating that temporal encoding provides additional discriminative information for finer-grained MOI distinctions, but the absolute level is not yet practically actionable for MOI-level classification (see Discussion). The binary multi-task and four-class multi-task variants achieve closely matched binary accuracy (93.2\% vs.\ 93.5\%); we use the four-class variant as the headline ``Tempo multitask'' in main Table~1 because it provides the auxiliary severity readout discussed in the MOI-dependent detectability section. Bold values indicate best performance per column; underlined values indicate second-best.
 
 \textsuperscript{a}Binary accuracy derived from four-class predictions by collapsing MOI classes 0--2 into ``Infected.''
 
@@ -412,7 +412,7 @@ Full component ablation including auxiliary four-class severity accuracy and the
 \toprule
 \textbf{Offset config} & \textbf{Span} & \textbf{Bin Acc ($\uparrow$)} & \textbf{4cls Acc ($\uparrow$)} & \textbf{F1\textsubscript{macro} ($\uparrow$)} & \textbf{MAE (h) ($\downarrow$)} & \textbf{R$^2$ ($\uparrow$)} \\
 \midrule
-Single-frame [0, 0, 0]   & 0h  & 91.0\%             & 65.9\%             & 0.633             & 1.67             & 0.971           \\
+Single-frame [0, 0, 0]   & 0h  & 91.0\%             & 63.1\%             & 0.633             & 1.67             & 0.971           \\
 Short [$-$3, $-$1.5, 0]  & 3h  & \underline{93.0\%} & 68.4\%             & 0.648             & 1.45             & 0.979           \\
 Standard [$-$6, $-$3, 0] & 6h  & \textbf{93.5\%}    & \textbf{70.6\%}    & \textbf{0.703}    & \underline{1.34} & \underline{0.981} \\
 Long [$-$12, $-$6, 0]    & 12h & 92.2\%             & \underline{69.1\%} & \underline{0.668} & \textbf{1.24}    & \textbf{0.984}  \\
