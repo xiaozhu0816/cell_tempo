@@ -1,0 +1,29 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+
+# Virtual environments
+.venv/
+venv/
+
+# Data and model artifacts
+data/
+*.npy
+*.npz
+*.tif
+*.tiff
+*.pt
+*.pth
+
+# Training and analysis outputs
+outputs/
+logs/
+slurm_LOG/
+analysis/generated/
+
+# OS / editor files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
