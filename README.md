@@ -65,8 +65,4 @@ Other paper-facing variants are also provided:
 python convert_tiff_to_npy.py --workers 8
 ```
 
-## Notes
-
-- `scripts/*.sh` are cluster submission examples; they now run relative to the repository root.
-- This public snapshot intentionally excludes non-paper branches and older exploratory baselines.
 
