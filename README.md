@@ -15,11 +15,6 @@ This public snapshot is organized around the main split used in the paper:
 - The row-split configs and launch scripts used for the paper's main experiments and ablations.
 - SLURM submission examples in `scripts/`.
 
-## What is intentionally not included
-
-- Raw TIFF stacks, cached `.npy` files, checkpoints, logs, and other generated outputs.
-- `paper/` assets, manuscript PDFs, review files, and generated figure files.
-- Older exploratory scripts and non-paper experiment branches.
 
 ## Repository layout
 
